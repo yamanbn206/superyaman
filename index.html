@@ -1,0 +1,3245 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#090d16">
+    <title>سوبر يمان ناصر 3D - نسخة الموبايل الاحترافية (السويداء)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;800;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            overscroll-behavior: none;
+            touch-action: none;
+            font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+            background: #090d16;
+            color: #fff;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            touch-action: none;
+        }
+
+        /* شريط المعلومات العلوي المخصص للموبايل HUD */
+        #hud {
+            position: fixed;
+            top: max(8px, env(safe-area-inset-top));
+            left: max(10px, env(safe-area-inset-left));
+            right: max(10px, env(safe-area-inset-right));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .hud-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, rgba(14, 18, 26, 0.88), rgba(28, 34, 48, 0.82));
+            border: 1.5px solid rgba(255, 215, 0, 0.75);
+            border-radius: 14px;
+            padding: 5px 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(6px);
+        }
+
+        .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .hud-val {
+            color: #ffd700;
+            font-size: 15px;
+            font-weight: 900;
+            text-shadow: 0 2px 4px rgba(255, 215, 0, 0.4);
+        }
+
+        .hud-divider {
+            width: 1.5px;
+            height: 16px;
+            background: rgba(255, 255, 255, 0.22);
+            margin: 0 2px;
+        }
+
+        .power-badge {
+            padding: 2px 9px;
+            border-radius: 16px;
+            font-size: 11.5px;
+            font-weight: 900;
+            background: linear-gradient(45deg, #c62828, #ef5350);
+            border: 1px solid #ffd700;
+            white-space: nowrap;
+        }
+
+        /* شريط الأدوات والمراحل السريع المدمج للموبايل */
+        #quick-bar {
+            position: fixed;
+            top: calc(max(8px, env(safe-area-inset-top)) + 42px);
+            left: max(10px, env(safe-area-inset-left));
+            right: max(10px, env(safe-area-inset-right));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            z-index: 20;
+            pointer-events: none;
+            flex-wrap: wrap;
+        }
+
+        .bar-cluster {
+            display: flex;
+            gap: 5px;
+            pointer-events: auto;
+            flex-wrap: wrap;
+        }
+
+        .tool-btn {
+            pointer-events: auto;
+            background: rgba(18, 23, 34, 0.86);
+            color: #fff;
+            border: 1.5px solid rgba(255, 215, 0, 0.6);
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 0.15s, background 0.15s;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.45);
+            white-space: nowrap;
+        }
+
+        .tool-btn:active, .tool-btn.active {
+            background: linear-gradient(45deg, #d32f2f, #ff6f00);
+            border-color: #fff;
+            transform: scale(0.95);
+        }
+
+        /* شريط صحة زعيم قلعة صلخد */
+        #boss-hud {
+            position: fixed;
+            top: calc(max(8px, env(safe-area-inset-top)) + 80px);
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(380px, 88vw);
+            background: rgba(20, 10, 10, 0.92);
+            border: 2px solid #ff3d00;
+            border-radius: 12px;
+            padding: 5px 12px;
+            z-index: 20;
+            display: none;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(255, 61, 0, 0.5);
+            pointer-events: none;
+        }
+
+        #boss-title {
+            font-size: 12.5px;
+            font-weight: 900;
+            color: #ffccbc;
+            margin-bottom: 4px;
+        }
+
+        #boss-bar-bg {
+            width: 100%;
+            height: 11px;
+            background: #2b1212;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #ff6e40;
+        }
+
+        #boss-bar-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff1744, #ff9100);
+            transition: width 0.25s ease-out;
+        }
+
+        /* شاشة البداية والرسائل المتجاوبة مع الموبايل */
+        #overlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(18, 24, 38, 0.88), rgba(5, 7, 12, 0.96));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 60;
+            padding: 14px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+        }
+
+        .overlay-card {
+            width: min(650px, 95vw);
+            max-height: 92vh;
+            overflow-y: auto;
+            background: linear-gradient(145deg, rgba(28, 34, 48, 0.96), rgba(15, 19, 28, 0.99));
+            border: 2.5px solid #ffd700;
+            border-radius: 22px;
+            padding: 20px 22px;
+            box-shadow: 0 16px 50px rgba(0,0,0,0.85), 0 0 30px rgba(255, 215, 0, 0.22);
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: linear-gradient(90deg, #b71c1c, #d32f2f, #b71c1c);
+            border: 1.5px solid #ffd700;
+            color: #fff;
+            padding: 4px 16px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            box-shadow: 0 4px 12px rgba(211, 47, 47, 0.6);
+        }
+
+        #overlay-title {
+            font-size: clamp(22px, 5vw, 36px);
+            font-weight: 900;
+            color: #ffd700;
+            margin: 4px 0 8px;
+            text-shadow: 0 3px 12px rgba(255, 215, 0, 0.4);
+        }
+
+        #overlay-desc {
+            font-size: clamp(13.5px, 2.8vw, 16.5px);
+            color: #e0e6ed;
+            line-height: 1.55;
+            margin-bottom: 14px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+            gap: 8px;
+            text-align: right;
+            margin-bottom: 16px;
+        }
+
+        .feat-box {
+            background: rgba(255,255,255,0.06);
+            border-right: 3.5px solid #ffd700;
+            padding: 7px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #f5f7fa;
+            line-height: 1.4;
+        }
+
+        .cta-btn {
+            background: linear-gradient(45deg, #d32f2f, #ff6f00);
+            color: #fff;
+            border: 2.5px solid #ffd700;
+            padding: 11px 36px;
+            font-family: inherit;
+            font-size: 19px;
+            font-weight: 900;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 6px 22px rgba(255, 87, 34, 0.65);
+        }
+
+        .cta-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* إشعار عائم وسط الشاشة */
+        #toast {
+            position: fixed;
+            top: calc(max(8px, env(safe-area-inset-top)) + 84px);
+            left: 50%;
+            transform: translateX(-50%) scale(0.8);
+            background: linear-gradient(135deg, rgba(20, 24, 34, 0.95), rgba(45, 20, 20, 0.95));
+            border: 2px solid #ffd700;
+            color: #ffd700;
+            padding: 7px 20px;
+            border-radius: 40px;
+            font-size: 15px;
+            font-weight: 900;
+            z-index: 40;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.28s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.65);
+            white-space: nowrap;
+            max-width: 92vw;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
+
+        /* =========================================================
+           منظومة تحكم الموبايل الاحترافية (Touch Controls & Joystick)
+           ========================================================= */
+        #touch-controls {
+            position: fixed;
+            bottom: max(16px, env(safe-area-inset-bottom));
+            left: max(16px, env(safe-area-inset-left));
+            right: max(16px, env(safe-area-inset-right));
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            z-index: 35;
+            pointer-events: none;
+        }
+
+        /* منطقة الإبهام الأيسر (الحركة يمين/يسار بالانزلاق أو العصا التفاعلية) */
+        #left-pad-zone {
+            position: relative;
+            width: 176px;
+            height: 96px;
+            pointer-events: auto;
+            touch-action: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 20, 32, 0.55);
+            border: 2px solid rgba(255, 215, 0, 0.45);
+            border-radius: 50px;
+            padding: 8px;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.55), inset 0 0 15px rgba(255,215,0,0.1);
+        }
+
+        .dpad-btn {
+            width: 74px;
+            height: 78px;
+            border-radius: 42px;
+            background: linear-gradient(145deg, rgba(35, 42, 60, 0.9), rgba(18, 22, 34, 0.95));
+            border: 2.5px solid #ffd700;
+            color: #fff;
+            font-size: 30px;
+            font-weight: 900;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.6);
+            transition: transform 0.08s, background 0.08s, box-shadow 0.08s;
+            pointer-events: none; /* اللمس يدار من الحاوية لدعم الانزلاق السلس */
+        }
+
+        .dpad-btn span {
+            font-size: 10px;
+            color: #ffd700;
+            margin-top: -4px;
+        }
+
+        .dpad-btn.pressed {
+            background: linear-gradient(145deg, #d32f2f, #ff6f00);
+            border-color: #ffffff;
+            transform: scale(0.92);
+            box-shadow: 0 0 20px rgba(255, 111, 0, 0.85);
+        }
+
+        /* منطقة الإبهام الأيمن (القفز وإطلاق اللهب بتوزيع أركيد مريح) */
+        #right-action-zone {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            gap: 14px;
+            pointer-events: auto;
+            touch-action: none;
+        }
+
+        .action-btn {
+            border-radius: 50%;
+            color: #fff;
+            font-family: inherit;
+            font-weight: 900;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.65), inset 0 2px 4px rgba(255,255,255,0.3);
+            transition: transform 0.08s, filter 0.08s, box-shadow 0.08s;
+            touch-action: none;
+            cursor: pointer;
+        }
+
+        #btn-fire {
+            width: 74px;
+            height: 74px;
+            background: radial-gradient(circle at 30% 30%, #ff7043, #c62828);
+            border: 3px solid #ffd700;
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        #btn-jump {
+            width: 92px;
+            height: 92px;
+            background: radial-gradient(circle at 30% 30%, #66bb6a, #1b5e20);
+            border: 3.5px solid #ffd700;
+            font-size: 32px;
+            margin-bottom: 18px; /* مرفوع قليلاً بزاوية الإبهام الطبيعية */
+        }
+
+        .action-label {
+            font-size: 11px;
+            font-weight: 900;
+            color: #fff;
+            margin-top: -4px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+        }
+
+        .action-btn.pressed {
+            transform: scale(0.90);
+            filter: brightness(1.25);
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
+            border-color: #fff;
+        }
+
+        /* تعديلات خاصة للشاشات الصغيرة في الوضع العمودي Portrait */
+        @media (max-width: 520px) {
+            .hud-group {
+                padding: 4px 8px;
+                gap: 5px;
+            }
+            .hud-item {
+                font-size: 11.5px;
+            }
+            .hud-val {
+                font-size: 13.5px;
+            }
+            #left-pad-zone {
+                width: 154px;
+                height: 84px;
+                padding: 6px;
+            }
+            .dpad-btn {
+                width: 65px;
+                height: 68px;
+                font-size: 25px;
+            }
+            #btn-fire {
+                width: 64px;
+                height: 64px;
+                font-size: 20px;
+            }
+            #btn-jump {
+                width: 80px;
+                height: 80px;
+                font-size: 28px;
+                margin-bottom: 12px;
+            }
+            #right-action-zone {
+                gap: 10px;
+            }
+        }
+
+        /* تعديلات الوضع الأفقي للموبايل Landscape لتوفير أقصى مساحة للرؤية */
+        @media (max-height: 500px) and (orientation: landscape) {
+            #hud {
+                top: 6px;
+            }
+            .hud-group {
+                padding: 3px 10px;
+            }
+            #quick-bar {
+                top: 40px;
+            }
+            .tool-btn {
+                padding: 3px 8px;
+                font-size: 11px;
+            }
+            #touch-controls {
+                bottom: 10px;
+            }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <!-- شريط المعلومات العلوي للموبايل -->
+    <div id="hud">
+        <div class="hud-group">
+            <div class="hud-item">
+                <span>👕</span>
+                <span class="hud-val">YAMAN NASIR</span>
+            </div>
+            <div class="hud-divider"></div>
+            <div class="hud-item">
+                <span id="power-status" class="power-badge">يمان العادي</span>
+            </div>
+            <div class="hud-divider"></div>
+            <div class="hud-item">
+                <span id="hud-level" class="hud-val">1-1 سهول السويداء</span>
+            </div>
+        </div>
+
+        <div class="hud-group">
+            <div class="hud-item">
+                <span>🪙</span>
+                <span id="hud-coins" class="hud-val">0</span>
+            </div>
+            <div class="hud-divider"></div>
+            <div class="hud-item">
+                <span>⭐</span>
+                <span id="hud-score" class="hud-val">0</span>
+            </div>
+            <div class="hud-divider"></div>
+            <div class="hud-item">
+                <span>❤️</span>
+                <span id="hud-lives" class="hud-val">5</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- شريط المراحل والأدوات السريع للموبايل -->
+    <div id="quick-bar">
+        <div class="bar-cluster">
+            <button class="tool-btn active" id="lvl-btn-1" onclick="jumpToLevel(1)">1-1 البازلت</button>
+            <button class="tool-btn" id="lvl-btn-2" onclick="jumpToLevel(2)">1-2 شهبا</button>
+            <button class="tool-btn" id="lvl-btn-3" onclick="jumpToLevel(3)">1-3 الكفر</button>
+            <button class="tool-btn" id="lvl-btn-4" onclick="jumpToLevel(4)">1-4 صلخد</button>
+        </div>
+        <div class="bar-cluster">
+            <button class="tool-btn" id="cam-btn" onclick="toggleCameraMode()">🎥 الكاميرا</button>
+            <button class="tool-btn" id="music-btn" onclick="toggleMusic()">🔊 الصوت</button>
+            <button class="tool-btn" id="fs-btn" onclick="toggleFullscreen()">⛶ ملء الشاشة</button>
+        </div>
+    </div>
+
+    <!-- شريط صحة الزعيم -->
+    <div id="boss-hud">
+        <div id="boss-title">🐉 زعيم قلعة صلخد: التنين البركاني البازلتي</div>
+        <div id="boss-bar-bg"><div id="boss-bar-fill"></div></div>
+    </div>
+
+    <!-- إشعار عائم -->
+    <div id="toast">🍎 تفاحة السويداء السحرية! سوبر يمان!</div>
+
+    <!-- شاشة البداية والرسائل -->
+    <div id="overlay">
+        <div class="overlay-card">
+            <div class="hero-badge">📱 MOBILE EDITION ★ SUPER YAMAN NASIR 3D</div>
+            <div id="overlay-title">مغامرات يمان ناصر 3D (نسخة الموبايل)</div>
+            <div id="overlay-desc">
+                مُصممة ومُخصصة بالكامل للهواتف المحمولة والشاشات اللمسية! استكشف طبيعة <b>محافظة السويداء (جبل العرب)</b> من المدرجات البازلتية وبساتين التفاح وأعمدة شهبا وقنوات حتى المواجهة الكبرى في <b>قلعة صلخد</b>.
+            </div>
+            <div class="features-grid">
+                <div class="feat-box">🕹️ <b>تحكم لمس متعدد (Multi-Touch):</b> انزلاق سلس للإبهام الأيسر للحركة مع أزرار أركيد مريحة للقفز واللهب.</div>
+                <div class="feat-box">📱 <b>تكيف طولي وعرضي ذكي:</b> زاوية كاميرا 3D تتكيف تلقائياً سواء أمسكت الموبايل بالطول أو بالعرض.</div>
+                <div class="feat-box">👕 <b>البطل YAMAN NASIR:</b> مجسم 3D مفصلي مع اسم يمان ناصر على الصدر والظهر والقبعة.</div>
+                <div class="feat-box">🐗 <b>حيوانات وصناديق دقيقة:</b> مرور سلس 100% تحت جميع الصناديق ومواجهة الخنازير البرية والسلاحف والعقارب.</div>
+            </div>
+            <button class="cta-btn" id="overlay-btn" onclick="startGame()">ابدأ اللعب على الموبايل ▶</button>
+        </div>
+    </div>
+
+    <!-- أزرار التحكم اللمسية الاحترافية للموبايل (دائمة الظهور) -->
+    <div id="touch-controls" dir="ltr">
+        <!-- منطقة الإبهام الأيسر: تدعم اللمس المباشر والانزلاق السلس بين اليسار واليمين -->
+        <div id="left-pad-zone">
+            <div class="dpad-btn" id="btn-left">
+                ◀
+                <span>يسار</span>
+            </div>
+            <div class="dpad-btn" id="btn-right">
+                ▶
+                <span>يمين</span>
+            </div>
+        </div>
+
+        <!-- منطقة الإبهام الأيمن: زر اللهب + زر القفز الكبير -->
+        <div id="right-action-zone">
+            <div class="action-btn" id="btn-fire">
+                🔥
+                <span class="action-label">لهب</span>
+            </div>
+            <div class="action-btn" id="btn-jump">
+                ▲
+                <span class="action-label">قفز</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        function vibratePhone(pattern) {
+            try {
+                if (navigator.vibrate) navigator.vibrate(pattern);
+            } catch (e) {}
+        }
+
+        function toggleFullscreen() {
+            const docEl = document.documentElement;
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (docEl.requestFullscreen) docEl.requestFullscreen().catch(()=>{});
+                else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('landscape').catch(()=>{});
+                }
+                showToast('⛶ تم تفعيل وضع ملء الشاشة للموبايل');
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            }
+        }
+// =========================================================================
+        // 1. النظام الصوتي والموسيقي المدمج (Web Audio Synthesizer - ألحان ماريو + إيقاع الجبل)
+        // =========================================================================
+        let audioCtx = null;
+        let soundEnabled = true;
+        let bgmInterval = null;
+        let noteIdx = 0;
+
+        const melodyNotes = [
+            330, 330, 0, 330, 0, 262, 330, 0, 392, 0, 0, 0, 196, 0, 0, 0,
+            262, 0, 0, 196, 0, 0, 165, 0, 0, 220, 0, 247, 0, 233, 220, 0,
+            196, 330, 392, 440, 0, 349, 392, 0, 330, 0, 262, 294, 247, 0, 0, 0
+        ];
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTone(freq, duration = 0.12, type = 'square', vol = 0.08, slideTo = null) {
+            if (!soundEnabled || !audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                if (slideTo) {
+                    osc.frequency.exponentialRampToValueAtTime(slideTo, audioCtx.currentTime + duration);
+                }
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function sfxJump() { vibratePhone(12); playTone(220, 0.22, 'square', 0.09, 620); }
+        function sfxCoin() {
+            playTone(987.77, 0.08, 'sine', 0.1);
+            setTimeout(() => playTone(1318.5, 0.25, 'sine', 0.1), 75);
+        }
+        function sfxBump() { playTone(140, 0.1, 'triangle', 0.14, 70); }
+        function sfxBreak() { vibratePhone(30);
+            playTone(180, 0.14, 'sawtooth', 0.12, 55);
+            setTimeout(() => playTone(120, 0.15, 'sawtooth', 0.1, 45), 60);
+        }
+        function sfxPowerUp() { vibratePhone([25, 40, 45]);
+            const notes = [330, 392, 659, 523, 587, 784];
+            notes.forEach((n, i) => setTimeout(() => playTone(n, 0.1, 'triangle', 0.11), i * 65));
+        }
+        function sfxStomp() { playTone(420, 0.14, 'sine', 0.12, 130); }
+        function sfxFireball() { playTone(760, 0.12, 'sawtooth', 0.09, 220); }
+        function sfxHurt() { vibratePhone(100);
+            [400, 320, 240, 160].forEach((n, i) => setTimeout(() => playTone(n, 0.1, 'sawtooth', 0.11), i * 70));
+        }
+        function sfxWin() {
+            const notes = [262, 330, 392, 523, 659, 784, 1046];
+            notes.forEach((n, i) => setTimeout(() => playTone(n, 0.16, 'triangle', 0.12), i * 110));
+        }
+
+        function startBGM() {
+            if (bgmInterval) clearInterval(bgmInterval);
+            bgmInterval = setInterval(() => {
+                if (!gameActive || !soundEnabled || !audioCtx) return;
+                const f = melodyNotes[noteIdx % melodyNotes.length];
+                if (f > 0) {
+                    playTone(f, 0.11, 'Vibrato' ? 'sawtooth' : 'square', 0.032);
+                }
+                noteIdx++;
+            }, 150);
+        }
+
+        function toggleMusic() {
+            initAudio();
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('music-btn');
+            btn.innerText = soundEnabled ? '🔊 الصوت' : '🔇 صامت';
+        }
+
+        // =========================================================================
+        // 2. المتغيرات العامة للمشهد والفيزياء
+        // =========================================================================
+        let scene, camera, renderer, dirLight, ambientLight, hemiLight;
+        let clock = new THREE.Clock();
+
+        let gameActive = false;
+        let currentLevel = 1;
+        let score = 0;
+        let coinsCount = 0;
+        let lives = 5;
+        let cameraMode = 0; // 0: كلاسيكي جانبي مائل، 1: سينمائي قريب، 2: بانورامي واسع
+
+        // حالة البطل يمان ناصر
+        // powerState: 0 = يمان العادي، 1 = سوبر يمان (تفاحة السويداء)، 2 = يمان الناري (زهرة الجبل)
+        const playerState = {
+            mesh: null,
+            parts: {},
+            x: 0,
+            y: 2,
+            vx: 0,
+            vy: 0,
+            width: 0.95,      // عرض التصادم الدقيق
+            height: 1.75,     // ارتفاع التصادم الدقيق (عادي: 1.75، سوبر: 2.20)
+            facing: 1,
+            isGrounded: false,
+            powerState: 0,
+            invulnerableTimer: 0,
+            fireCooldown: 0,
+            walkCycle: 0
+        };
+
+        // القوائم التفاعلية في المرحلة
+        let platforms = [];       // المنصات والأرضيات والأنابيب
+        let blocks = [];          // صناديق الاستفهام (?) وصناديق الطوب القابلة للكسر
+        let items = [];           // العملات، تفاح السويداء، زهور النار
+        let enemies = [];         // الحيوانات المهاجمة (خنازير برية، سلاحف، عقارب، صقور، نباتات)
+        let fireballs = [];       // كرات اللهب
+        let particles = [];       // شظايا الصخور والمؤثرات البصرية
+        let movingPlatforms = []; // المنصات المتحركة
+        let springs = [];         // منصات القفز النابضة
+        let decorations = [];     // الأشجار، الأعمدة الرومانية، الجبال، السناسل، الغيوم
+        let clouds = [];
+        let skyBirds = [];
+        let goalFlag = null;
+        let boss = null;
+
+        const keys = { left: false, right: false, up: false, fire: false };
+        let jumpPressedLastFrame = false;
+
+        // المواد والخامات المولدة برمجياً (Procedural PBR Textures)
+        const MATS = {};
+
+        // =========================================================================
+        // 3. توليد الخامات الاحترافية عالية الدقة (Procedural Textures & Bump Maps)
+        // =========================================================================
+        function createProceduralTextures() {
+            // 1. نسيج حجر البازلت البركاني الأسود المميز لمحافظة السويداء
+            const bCanvas = document.createElement('canvas');
+            bCanvas.width = 256; bCanvas.height = 256;
+            const bCtx = bCanvas.getContext('2d');
+            bCtx.fillStyle = '#25272c';
+            bCtx.fillRect(0, 0, 256, 256);
+
+            // رسم الحجارة البازلتية المضلعة (مدماك بازلتي)
+            bCtx.strokeStyle = '#141518';
+            bCtx.lineWidth = 4;
+            for (let row = 0; row < 4; row++) {
+                const y = row * 64;
+                bCtx.beginPath(); bCtx.moveTo(0, y); bCtx.lineTo(256, y); bCtx.stroke();
+                const offset = (row % 2) * 42;
+                for (let col = 0; col < 4; col++) {
+                    const x = (col * 85 + offset) % 256;
+                    bCtx.fillStyle = row % 2 === 0 ? '#2b2d33' : '#212328';
+                    bCtx.fillRect(x + 3, y + 3, 79, 58);
+                    bCtx.beginPath(); bCtx.moveTo(x, y); bCtx.lineTo(x, y + 64); bCtx.stroke();
+                }
+            }
+            // مسامات الصخر البركاني
+            for (let i = 0; i < 1200; i++) {
+                bCtx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.18)';
+                bCtx.fillRect(Math.random() * 256, Math.random() * 256, 3, 3);
+            }
+            const basaltTex = new THREE.CanvasTexture(bCanvas);
+            basaltTex.wrapS = THREE.RepeatWrapping;
+            basaltTex.wrapT = THREE.RepeatWrapping;
+
+            MATS.basalt = new THREE.MeshStandardMaterial({
+                map: basaltTex,
+                bumpMap: basaltTex,
+                bumpScale: 0.08,
+                roughness: 0.85,
+                metalness: 0.1
+            });
+
+            // 2. نسيج الحجر الكلسي/الروماني الأثري (شهبا وقنوات)
+            const rCanvas = document.createElement('canvas');
+            rCanvas.width = 256; rCanvas.height = 256;
+            const rCtx = rCanvas.getContext('2d');
+            rCtx.fillStyle = '#dfd3c3';
+            rCtx.fillRect(0, 0, 256, 256);
+            rCtx.strokeStyle = '#b8a692';
+            rCtx.lineWidth = 3;
+            for (let r = 0; r < 4; r++) {
+                rCtx.strokeRect(4, r * 64 + 4, 248, 56);
+            }
+            for (let i = 0; i < 700; i++) {
+                rCtx.fillStyle = Math.random() > 0.5 ? 'rgba(255,250,240,0.15)' : 'rgba(120,100,80,0.12)';
+                rCtx.fillRect(Math.random() * 256, Math.random() * 256, 4, 4);
+            }
+            const romanTex = new THREE.CanvasTexture(rCanvas);
+            romanTex.wrapS = THREE.RepeatWrapping;
+            romanTex.wrapT = THREE.RepeatWrapping;
+
+            MATS.roman = new THREE.MeshStandardMaterial({
+                map: romanTex,
+                bumpMap: romanTex,
+                bumpScale: 0.05,
+                roughness: 0.65,
+                metalness: 0.05
+            });
+
+            // 3. نسيج صندوق الاستفهام الذهبي (?)
+            const qCanvas = document.createElement('canvas');
+            qCanvas.width = 256; qCanvas.height = 256;
+            const qCtx = qCanvas.getContext('2d');
+            const qGrad = qCtx.createLinearGradient(0, 0, 256, 256);
+            qGrad.addColorStop(0, '#ffeb3b');
+            qGrad.addColorStop(0.5, '#fbc02d');
+            qGrad.addColorStop(1, '#f57f17');
+            qCtx.fillStyle = qGrad;
+            qCtx.fillRect(0, 0, 256, 256);
+
+            qCtx.strokeStyle = '#b26a00';
+            qCtx.lineWidth = 14;
+            qCtx.strokeRect(10, 10, 236, 236);
+
+            // المسامير الأربعة في الزوايا
+            qCtx.fillStyle = '#795548';
+            [[28,28],[228,28],[28,228],[228,228]].forEach(([cx,cy]) => {
+                qCtx.beginPath(); qCtx.arc(cx, cy, 10, 0, Math.PI * 2); qCtx.fill();
+            });
+
+            // علامة الاستفهام البارزة
+            qCtx.font = '900 165px Cairo, Arial';
+            qCtx.textAlign = 'center';
+            qCtx.textBaseline = 'middle';
+            qCtx.fillStyle = '#5d4037';
+            qCtx.fillText('?', 134, 140);
+            qCtx.fillStyle = '#ffffff';
+            qCtx.fillText('?', 126, 132);
+
+            const qTex = new THREE.CanvasTexture(qCanvas);
+            MATS.questionBlock = new THREE.MeshStandardMaterial({
+                map: qTex,
+                bumpMap: qTex,
+                bumpScale: 0.04,
+                roughness: 0.3,
+                metalness: 0.35
+            });
+
+            // 4. نسيج طوب البازلت القابل للكسر (Brick Block)
+            const brCanvas = document.createElement('canvas');
+            brCanvas.width = 256; brCanvas.height = 256;
+            const brCtx = brCanvas.getContext('2d');
+            brCtx.fillStyle = '#5d4037';
+            brCtx.fillRect(0, 0, 256, 256);
+            for (let r = 0; r < 4; r++) {
+                const y = r * 64;
+                const off = (r % 2) * 64;
+                for (let c = -1; c < 3; c++) {
+                    brCtx.fillStyle = (r + c) % 2 === 0 ? '#8d5538' : '#79462d';
+                    brCtx.fillRect(c * 128 + off + 5, y + 5, 118, 54);
+                    brCtx.fillStyle = 'rgba(255,255,255,0.12)';
+                    brCtx.fillRect(c * 128 + off + 5, y + 5, 118, 8);
+                }
+            }
+            const brickTex = new THREE.CanvasTexture(brCanvas);
+            MATS.brickBlock = new THREE.MeshStandardMaterial({
+                map: brickTex,
+                bumpMap: brickTex,
+                bumpScale: 0.06,
+                roughness: 0.75
+            });
+
+            // 5. صندوق فارغ بعد ضربه
+            MATS.usedBlock = new THREE.MeshStandardMaterial({
+                color: 0x616161,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+
+            // 6. مواد الطبيعة والعناصر
+            MATS.grass = new THREE.MeshStandardMaterial({ color: 0x388e3c, roughness: 0.65 });
+            MATS.grassBright = new THREE.MeshStandardMaterial({ color: 0x4caf50, roughness: 0.6 });
+            MATS.pipe = new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.25, metalness: 0.35 });
+            MATS.gold = new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.2, metalness: 0.85, emissive: 0x443000 });
+            MATS.wood = new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.88 });
+            MATS.leaves = new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.7 });
+            MATS.leavesLight = new THREE.MeshStandardMaterial({ color: 0x43a047, roughness: 0.65 });
+            MATS.apple = new THREE.MeshStandardMaterial({ color: 0xd50000, roughness: 0.18, metalness: 0.1 });
+            MATS.grape = new THREE.MeshStandardMaterial({ color: 0x6a1b9a, roughness: 0.3, metalness: 0.1 });
+            MATS.lava = new THREE.MeshBasicMaterial({ color: 0xff3d00 });
+        }
+
+        // =========================================================================
+        // 4. تصميم قميص وشخصية البطل (YAMAN NASIR) بتفاصيل 3D احترافية
+        // =========================================================================
+        function createYamanShirtTexture(mainColor = '#d32f2f', subColor = '#ffd700') {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            // لون القميص
+            ctx.fillStyle = mainColor;
+            ctx.fillRect(0, 0, 512, 512);
+
+            // حمالات الأفرول الجينز على الجانبين والأسفل
+            ctx.fillStyle = '#1565c0';
+            ctx.fillRect(0, 370, 512, 142);
+            ctx.fillRect(45, 0, 68, 512);
+            ctx.fillRect(399, 0, 68, 512);
+
+            // الأزرار الذهبية
+            ctx.fillStyle = '#ffd700';
+            ctx.beginPath(); ctx.arc(79, 355, 22, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(433, 355, 22, 0, Math.PI * 2); ctx.fill();
+
+            // درع/شعار الصدر لاسم YAMAN NASIR
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.roundRect(65, 85, 382, 230, 28);
+            ctx.fill();
+            ctx.stroke();
+
+            // كتابة اسم YAMAN NASIR بوضوح فائق
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0,0,0,0.9)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 3;
+            ctx.shadowOffsetY = 3;
+
+            ctx.font = '900 72px Arial, sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('YAMAN', 256, 158);
+
+            ctx.font = '900 72px Arial, sans-serif';
+            ctx.fillStyle = subColor;
+            ctx.fillText('NASIR', 256, 248);
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createCapBadgeTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 128;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.ellipse(128, 64, 115, 54, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = '#ffd700';
+            ctx.stroke();
+            ctx.fillStyle = '#d32f2f';
+            ctx.font = '900 50px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('YAMAN', 128, 66);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function createFloatingNameBanner() {
+            const c = document.createElement('canvas');
+            c.width = 512; c.height = 128;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = 'rgba(15, 20, 30, 0.85)';
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.roundRect(16, 16, 480, 96, 48);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.font = '900 52px Arial, sans-serif';
+            ctx.fillStyle = '#ffd700';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('★ YAMAN NASIR ★', 256, 66);
+
+            const tex = new THREE.CanvasTexture(c);
+            const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+            const sprite = new THREE.Sprite(mat);
+            sprite.scale.set(2.3, 0.58, 1);
+            sprite.position.set(0, 2.38, 0);
+            return sprite;
+        }
+
+        function buildPlayerModel() {
+            if (playerState.mesh) scene.remove(playerState.mesh);
+
+            const root = new THREE.Group();
+
+            const shirtTex = createYamanShirtTexture('#d32f2f', '#ffd700');
+            const shirtFireTex = createYamanShirtTexture('#ffffff', '#ff3d00');
+
+            const shirtMat = new THREE.MeshStandardMaterial({ color: 0xd32f2f, roughness: 0.5 });
+            const denimMat = new THREE.MeshStandardMaterial({ color: 0x1565c0, roughness: 0.7 });
+            const skinMat = new THREE.MeshStandardMaterial({ color: 0xffcba4, roughness: 0.45 });
+            const hairMat = new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.8 });
+            const gloveMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+            const bootMat = new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.6 });
+            const goldMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8, roughness: 0.2 });
+
+            const chestMat = new THREE.MeshStandardMaterial({ map: shirtTex, roughness: 0.45 });
+
+            // 1. الجذع (Torso) مع طباعة YAMAN NASIR على الصدر والظهر
+            const torsoMats = [
+                shirtMat, shirtMat, shirtMat, denimMat,
+                chestMat, // الأمام
+                chestMat  // الخلف
+            ];
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.82, 0.62), torsoMats);
+            torso.position.y = 0.82;
+            torso.castShadow = true;
+            root.add(torso);
+
+            // أزرار الأفرول الثلاثية الأبعاد
+            const btnGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.05, 12);
+            btnGeo.rotateX(Math.PI / 2);
+            const btnL = new THREE.Mesh(btnGeo, goldMat);
+            btnL.position.set(-0.28, 0.68, 0.32);
+            const btnR = new THREE.Mesh(btnGeo, goldMat);
+            btnR.position.set(0.28, 0.68, 0.32);
+            root.add(btnL, btnR);
+
+            // 2. الرأس والملامح الثلاثية الأبعاد
+            const headGroup = new THREE.Group();
+            headGroup.position.y = 1.48;
+
+            const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.38, 20, 20), skinMat);
+            headMesh.scale.set(1.05, 1.0, 1.0);
+            headMesh.castShadow = true;
+            headGroup.add(headMesh);
+
+            // الأنف الكروي البارز لماريو
+            const nose = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 14), skinMat);
+            nose.position.set(0, -0.02, 0.38);
+            headGroup.add(nose);
+
+            // الشارب الثلاثي الأبعاد المفصل
+            const mustacheGroup = new THREE.Group();
+            const mCenter = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.1, 0.12), hairMat);
+            const mLeft = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.09, 0.11), hairMat);
+            mLeft.position.set(-0.24, 0.03, 0);
+            mLeft.rotation.z = -0.25;
+            const mRight = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.09, 0.11), hairMat);
+            mRight.position.set(0.24, 0.03, 0);
+            mRight.rotation.z = 0.25;
+            mustacheGroup.add(mCenter, mLeft, mRight);
+            mustacheGroup.position.set(0, -0.13, 0.34);
+            headGroup.add(mustacheGroup);
+
+            // العيون والحواجب
+            const eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const pupilMat = new THREE.MeshBasicMaterial({ color: 0x0d47a1 });
+            [-0.14, 0.14].forEach(ex => {
+                const eyeW = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 10), eyeWhiteMat);
+                eyeW.scale.set(0.85, 1.2, 0.5);
+                eyeW.position.set(ex, 0.08, 0.33);
+                headGroup.add(eyeW);
+
+                const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.042, 8, 8), pupilMat);
+                pupil.position.set(ex, 0.08, 0.365);
+                headGroup.add(pupil);
+
+                const brow = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.035, 0.04), hairMat);
+                brow.position.set(ex, 0.19, 0.34);
+                headGroup.add(brow);
+            });
+
+            // الأذنين والشعر الخلفي
+            [-0.38, 0.38].forEach(ex => {
+                const ear = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 10), skinMat);
+                ear.scale.set(0.5, 1, 0.8);
+                ear.position.set(ex, 0.0, 0);
+                headGroup.add(ear);
+            });
+            const hairBack = new THREE.Mesh(new THREE.SphereGeometry(0.37, 14, 14), hairMat);
+            hairBack.position.set(0, -0.02, -0.06);
+            headGroup.add(hairBack);
+
+            // القبعة الاحترافية مع الشعار
+            const capDome = new THREE.Mesh(new THREE.SphereGeometry(0.41, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.58), shirtMat);
+            capDome.position.y = 0.08;
+            headGroup.add(capDome);
+
+            const capVisor = new THREE.Mesh(new THREE.CylinderGeometry(0.41, 0.43, 0.07, 16, 1, false, -Math.PI * 0.45, Math.PI * 0.9), shirtMat);
+            capVisor.position.set(0, 0.12, 0.14);
+            capVisor.rotation.x = 0.18;
+            headGroup.add(capVisor);
+
+            const badgePlane = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.42, 0.21),
+                new THREE.MeshBasicMaterial({ map: createCapBadgeTexture(), transparent: true })
+            );
+            badgePlane.position.set(0, 0.26, 0.39);
+            badgePlane.rotation.x = -0.15;
+            headGroup.add(badgePlane);
+
+            root.add(headGroup);
+
+            // 3. الذراعان المفصليتان مع القفازات البيضاء
+            function makeArm(side) {
+                const armPivot = new THREE.Group();
+                armPivot.position.set(side * 0.58, 1.12, 0);
+
+                const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.13, 0.42, 12), shirtMat);
+                sleeve.position.y = -0.18;
+                sleeve.castShadow = true;
+                armPivot.add(sleeve);
+
+                const glove = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), gloveMat);
+                glove.position.y = -0.42;
+                armPivot.add(glove);
+
+                return armPivot;
+            }
+            const leftArm = makeArm(-1);
+            const rightArm = makeArm(1);
+            root.add(leftArm, rightArm);
+
+            // 4. الأرجل المفصلية مع الأحذية الجبلية
+            function makeLeg(side) {
+                const legPivot = new THREE.Group();
+                legPivot.position.set(side * 0.24, 0.45, 0);
+
+                const pant = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.16, 0.36, 12), denimMat);
+                pant.position.y = -0.16;
+                pant.castShadow = true;
+                legPivot.add(pant);
+
+                const boot = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.2, 0.46), bootMat);
+                boot.position.set(0, -0.36, 0.06);
+                boot.castShadow = true;
+                legPivot.add(boot);
+
+                return legPivot;
+            }
+            const leftLeg = makeLeg(-1);
+            const rightLeg = makeLeg(1);
+            root.add(leftLeg, rightLeg);
+
+            // 5. شارة الاسم العائمة فوق الرأس
+            const banner = createFloatingNameBanner();
+            root.add(banner);
+
+            scene.add(root);
+
+            playerState.mesh = root;
+            playerState.parts = {
+                torso, headGroup, leftArm, rightArm, leftLeg, rightLeg,
+                shirtMat, chestMat, shirtTex, shirtFireTex, capDome, capVisor
+            };
+            updatePlayerPowerVisuals();
+        }
+
+        function updatePlayerPowerVisuals() {
+            const p = playerState;
+            const badge = document.getElementById('power-status');
+            if (!p.mesh) return;
+
+            if (p.powerState === 0) {
+                // يمان العادي
+                p.height = 1.75;
+                p.mesh.scale.set(0.92, 0.92, 0.92);
+                p.parts.shirtMat.color.setHex(0xd32f2f);
+                p.parts.chestMat.map = p.parts.shirtTex;
+                badge.innerText = 'يمان العادي';
+                badge.style.background = 'linear-gradient(45deg, #c62828, #ef5350)';
+            } else if (p.powerState === 1) {
+                // سوبر يمان (تفاحة السويداء)
+                p.height = 2.15;
+                p.mesh.scale.set(1.12, 1.14, 1.12);
+                p.parts.shirtMat.color.setHex(0xd32f2f);
+                p.parts.chestMat.map = p.parts.shirtTex;
+                badge.innerText = '🍎 سوبر يمان (تفاحة السويداء)';
+                badge.style.background = 'linear-gradient(45deg, #2e7d32, #66bb6a)';
+            } else if (p.powerState === 2) {
+                // يمان الناري (زهرة الجبل)
+                p.height = 2.15;
+                p.mesh.scale.set(1.12, 1.14, 1.12);
+                p.parts.shirtMat.color.setHex(0xffffff);
+                p.parts.chestMat.map = p.parts.shirtFireTex;
+                badge.innerText = '🔥 يمان الناري (اضغط X للهب)';
+                badge.style.background = 'linear-gradient(45deg, #e65100, #ffab00)';
+            }
+            p.parts.chestMat.needsUpdate = true;
+        }
+
+        // =========================================================================
+        // 5. الحيوانات المهاجمة والأعداء المفصلون (3D Detailed Attacking Wildlife)
+        // =========================================================================
+        // الأنواع:
+        // 'boar'     : الخنزير البري الجبلي (أنياب، أرجل متحركة، يندفع بسرعة عند الاقتراب)
+        // 'tortoise' : السلحفاة الصخرية المدرعة (قوقعة سداسية، تتحول لقوقعة منزلقة عند القفز عليها)
+        // 'scorpion' : العقرب البازلتي (مخالب، ذيل مقوس لاسع متحرك)
+        // 'falcon'   : صقر الجبل الجارح (يطير بأجنحة متحركة في السماء وينقض)
+        // 'piranha'  : نبتة الصبار المفترسة (تخرج من الأنابيب البازلتية)
+
+        function addEnemy(type, x, y, minX, maxX) {
+            const group = new THREE.Group();
+            const legs = [];
+            let extraParts = {};
+
+            if (type === 'boar') {
+                // === الخنزير البري الجبلي (Wild Mountain Boar) ===
+                const furMat = new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.9 });
+                const darkMat = new THREE.MeshStandardMaterial({ color: 0x1b0f0d, roughness: 0.9 });
+                const tuskMat = new THREE.MeshStandardMaterial({ color: 0xfff8e1, roughness: 0.3 });
+                const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff1744 });
+
+                // الجسم العضلي
+                const body = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.85, 0.85), furMat);
+                body.position.y = 0.68;
+                body.castShadow = true;
+                group.add(body);
+
+                // عرف الشعر الشائك على الظهر
+                for (let i = -0.45; i <= 0.45; i += 0.22) {
+                    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.28, 6), darkMat);
+                    spike.position.set(i, 1.18, 0);
+                    group.add(spike);
+                }
+
+                // الرأس والخطم
+                const snout = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.45, 0.55), darkMat);
+                snout.position.set(0.72, 0.62, 0);
+                group.add(snout);
+
+                // الأنياب البيضاء المعقوفة للأعلى
+                [-0.22, 0.22].forEach(zPos => {
+                    const tusk = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.36, 8), tuskMat);
+                    tusk.position.set(0.88, 0.68, zPos);
+                    tusk.rotation.z = -0.35;
+                    group.add(tusk);
+
+                    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 8), eyeMat);
+                    eye.position.set(0.62, 0.88, zPos * 1.3);
+                    group.add(eye);
+                });
+
+                // 4 أرجل متحركة
+                [[-0.42, -0.28], [-0.42, 0.28], [0.42, -0.28], [0.42, 0.28]].forEach(([lx, lz]) => {
+                    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.45, 0.22), darkMat);
+                    leg.position.set(lx, 0.22, lz);
+                    group.add(leg);
+                    legs.push(leg);
+                });
+
+            } else if (type === 'tortoise') {
+                // === السلحفاة الصخرية المدرعة (Armored Basalt Tortoise / Koopa) ===
+                const shellMat = new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.4, metalness: 0.2 });
+                const rimMat = new THREE.MeshStandardMaterial({ color: 0xffeb3b, roughness: 0.5 });
+                const skinMat = new THREE.MeshStandardMaterial({ color: 0xaed581, roughness: 0.6 });
+
+                // القوقعة المدرعة
+                const shellGroup = new THREE.Group();
+                const dome = new THREE.Mesh(new THREE.SphereGeometry(0.68, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.65), shellMat);
+                dome.position.y = 0.42;
+                dome.castShadow = true;
+                shellGroup.add(dome);
+
+                const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.68, 0.16, 14), rimMat);
+                rim.position.y = 0.42;
+                shellGroup.add(rim);
+                group.add(shellGroup);
+
+                // الرأس والعينان
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 12), skinMat);
+                head.position.set(0.68, 0.72, 0);
+                group.add(head);
+
+                const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+                [-0.12, 0.12].forEach(ez => {
+                    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), eyeMat);
+                    eye.position.set(0.88, 0.78, ez);
+                    group.add(eye);
+                });
+
+                // 4 أرجل
+                [[-0.35, -0.32], [-0.35, 0.32], [0.35, -0.32], [0.35, 0.32]].forEach(([lx, lz]) => {
+                    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.38, 8), skinMat);
+                    leg.position.set(lx, 0.19, lz);
+                    group.add(leg);
+                    legs.push(leg);
+                });
+
+                extraParts = { head, shellGroup };
+
+            } else if (type === 'scorpion') {
+                // === العقرب البازلتي السام (Basalt Scorpion) ===
+                const scorpMat = new THREE.MeshStandardMaterial({ color: 0x1a1a22, roughness: 0.35, metalness: 0.45 });
+                const stingMat = new THREE.MeshBasicMaterial({ color: 0xff3d00 });
+
+                const body = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.42, 0.68), scorpMat);
+                body.position.y = 0.42;
+                body.castShadow = true;
+                group.add(body);
+
+                // المخلابان الأماميان (Pincers)
+                [-0.38, 0.38].forEach(pz => {
+                    const claw = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.18, 0.24), scorpMat);
+                    claw.position.set(0.68, 0.48, pz);
+                    group.add(claw);
+                });
+
+                // الذيل المقوس اللاسع فوق الظهر
+                const tailGroup = new THREE.Group();
+                tailGroup.position.set(-0.48, 0.55, 0);
+                const seg1 = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.65, 8), scorpMat);
+                seg1.position.set(-0.15, 0.3, 0);
+                seg1.rotation.z = 0.45;
+                const seg2 = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.12, 0.55, 8), scorpMat);
+                seg2.position.set(-0.05, 0.72, 0);
+                seg2.rotation.z = -0.5;
+                const stinger = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.35, 8), stingMat);
+                stinger.position.set(0.22, 0.92, 0);
+                stinger.rotation.z = -Math.PI / 2;
+                tailGroup.add(seg1, seg2, stinger);
+                group.add(tailGroup);
+
+                // 6 أرجل مفصلية
+                [-0.35, 0, 0.35].forEach(lx => {
+                    [-0.42, 0.42].forEach(lz => {
+                        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.38, 0.12), scorpMat);
+                        leg.position.set(lx, 0.19, lz);
+                        group.add(leg);
+                        legs.push(leg);
+                    });
+                });
+
+                extraParts = { tailGroup };
+
+            } else if (type === 'falcon') {
+                // === صقر الجبل الجارح (Jabal Mountain Falcon) ===
+                const featherMat = new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.6 });
+                const wingMat = new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.7 });
+                const beakMat = new THREE.MeshStandardMaterial({ color: 0xffb300, roughness: 0.3 });
+
+                const body = new THREE.Mesh(new THREE.ConeGeometry(0.42, 1.3, 10), featherMat);
+                body.rotation.z = -Math.PI / 2;
+                body.position.y = 0.5;
+                group.add(body);
+
+                const beak = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.4, 8), beakMat);
+                beak.rotation.z = -Math.PI / 2;
+                beak.position.set(0.75, 0.5, 0);
+                group.add(beak);
+
+                // الجناحان الخافقان
+                const leftWing = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.08, 1.25), wingMat);
+                leftWing.position.set(0, 0.58, -0.65);
+                const rightWing = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.08, 1.25), wingMat);
+                rightWing.position.set(0, 0.58, 0.65);
+                group.add(leftWing, rightWing);
+
+                extraParts = { leftWing, rightWing };
+            }
+
+            group.position.set(x, y, 0);
+            scene.add(group);
+
+            enemies.push({
+                type,
+                mesh: group,
+                legs,
+                extraParts,
+                x,
+                y,
+                baseY: y,
+                minX,
+                maxX,
+                dir: 1,
+                speed: type === 'boar' ? 0.075 : (type === 'falcon' ? 0.09 : 0.055),
+                state: 'patrol', // 'patrol', 'shell_idle', 'shell_moving'
+                alive: true,
+                animPhase: Math.random() * Math.PI * 2
+            });
+        }
+
+        // نبتة الصبار المفترسة داخل الأنابيب
+        function addPipePiranha(x, pipeTopY) {
+            const group = new THREE.Group();
+            const greenMat = new THREE.MeshStandardMaterial({ color: 0x43a047, roughness: 0.5 });
+            const headMat = new THREE.MeshStandardMaterial({ color: 0xc62828, roughness: 0.4 });
+            const whiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 1.2, 10), greenMat);
+            stem.position.y = 0.6;
+            group.add(stem);
+
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.52, 14, 14), headMat);
+            head.position.y = 1.25;
+            group.add(head);
+
+            // فك وأسنان بيضاء
+            const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.16, 0.5), whiteMat);
+            jaw.position.y = 1.48;
+            group.add(jaw);
+
+            group.position.set(x, pipeTopY - 1.5, 0);
+            scene.add(group);
+
+            enemies.push({
+                type: 'piranha',
+                mesh: group,
+                legs: [],
+                extraParts: {},
+                x,
+                y: pipeTopY - 1.5,
+                baseY: pipeTopY,
+                minX: x,
+                maxX: x,
+                dir: 1,
+                speed: 0,
+                state: 'emerging',
+                alive: true,
+                animPhase: 0
+            });
+        }
+
+        // =========================================================================
+        // 6. الصناديق التفاعلية (?) والطوب مع ضمان المرور السلس 100% من تحتها
+        // =========================================================================
+        // content: 'coin' | 'apple' | 'fireflower' | 'multicoin' | 'empty'
+        function addOverheadBlock(x, y, blockType = 'question', content = 'coin') {
+            const blockSize = 1.2;
+
+            // --- فحص ذكي لضمان ارتفاع الصندوق بحيث يمر البطل (حتى وهو سوبر يمان) من تحته بحرية تامة ---
+            // نبحث عن أعلى منصة تقع تحت هذا الصندوق أفقياً
+            let highestSurfaceBelow = 0;
+            for (const p of platforms) {
+                if (p.isHazard) continue;
+                if (x >= p.x - p.w / 2 - 0.8 && x <= p.x + p.w / 2 + 0.8) {
+                    if (p.top <= y) {
+                        highestSurfaceBelow = Math.max(highestSurfaceBelow, p.top);
+                    }
+                }
+            }
+
+            // سوبر يمان ارتفاعه 2.15، لذلك نجعل أسفل الصندوق دائماً على ارتفاع لا يقل عن (أعلى سطح تحته + 3.05)
+            // أي مركز الصندوق لا يقل عن (highestSurfaceBelow + 3.65)
+            const minSafeCenterY = highestSurfaceBelow + 3.65;
+            const safeY = Math.max(y, minSafeCenterY);
+
+            const mat = blockType === 'question' ? MATS.questionBlock : MATS.brickBlock;
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(blockSize, blockSize, blockSize), mat);
+            mesh.position.set(x, safeY, 0);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+
+            blocks.push({
+                mesh,
+                x,
+                y: safeY,
+                baseY: safeY,
+                w: blockSize,
+                h: blockSize,
+                blockType,
+                content,
+                hitsLeft: content === 'multicoin' ? 5 : 1,
+                used: false,
+                bounceOffset: 0,
+                active: true
+            });
+        }
+
+        // =========================================================================
+        // 7. عناصر القوة والعملات (تفاحة السويداء، زهرة النار، الذهب)
+        // =========================================================================
+        function addCoin(x, y) {
+            const group = new THREE.Group();
+            const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.14, 18), MATS.gold);
+            disc.rotation.x = Math.PI / 2;
+            group.add(disc);
+            group.position.set(x, y, 0);
+            scene.add(group);
+
+            items.push({
+                type: 'coin',
+                mesh: group,
+                x,
+                y,
+                vx: 0,
+                vy: 0,
+                collected: false,
+                dynamic: false
+            });
+        }
+
+        function spawnPowerUpFromBlock(block) {
+            const x = block.x;
+            const y = block.y + 1.05;
+
+            if (block.content === 'coin' || block.content === 'multicoin') {
+                sfxCoin();
+                coinsCount++;
+                score += 100;
+                updateHUD();
+                spawnBurstParticles(x, y + 0.4, 0xffd700, 10);
+                return;
+            }
+
+            sfxPowerUp();
+            const group = new THREE.Group();
+
+            // إذا كان اللاعب عادياً يظهر له "تفاحة السويداء"، وإذا كان سوبر يمان تظهر له "زهرة النار الجبلية"
+            const spawnType = (block.content === 'fireflower' || playerState.powerState >= 1) ? 'fireflower' : 'apple';
+
+            if (spawnType === 'apple') {
+                // تفاحة السويداء الحمراء اللامعة
+                const appleBody = new THREE.Mesh(new THREE.SphereGeometry(0.46, 16, 16), MATS.apple);
+                appleBody.scale.set(1.08, 0.96, 1.08);
+                group.add(appleBody);
+
+                const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 0.25, 8), MATS.wood);
+                stem.position.y = 0.48;
+                group.add(stem);
+
+                const leaf = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.06, 0.14), MATS.grassBright);
+                leaf.position.set(0.14, 0.5, 0);
+                leaf.rotation.z = 0.35;
+                group.add(leaf);
+            } else {
+                // زهرة النار الجبلية المتوهجة
+                const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), MATS.grassBright);
+                stem.position.y = -0.2;
+                group.add(stem);
+
+                const ring = new THREE.Mesh(
+                    new THREE.TorusGeometry(0.32, 0.14, 10, 16),
+                    new THREE.MeshBasicMaterial({ color: 0xff3d00 })
+                );
+                ring.position.y = 0.2;
+                group.add(ring);
+
+                const core = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.22, 12, 12),
+                    new THREE.MeshBasicMaterial({ color: 0xffeb3b })
+                );
+                core.position.y = 0.2;
+                group.add(core);
+            }
+
+            group.position.set(x, y, 0);
+            scene.add(group);
+
+            items.push({
+                type: spawnType,
+                mesh: group,
+                x,
+                y,
+                vx: spawnType === 'apple' ? 0.06 : 0,
+                vy: 0.12,
+                collected: false,
+                dynamic: spawnType === 'apple'
+            });
+        }
+
+        // =========================================================================
+        // 8. هندسة المناظر الطبيعية التفصيلية لمحافظة السويداء (Suwayda Landscapes)
+        // =========================================================================
+        function addPlatform(x, topY, width, height = 3.0, style = 'basalt_grass') {
+            const centerY = topY - height / 2;
+            const mat = style === 'roman' ? MATS.roman : (style === 'lava' ? MATS.lava : MATS.basalt);
+
+            // ضبط تكرار النسيج حسب حجم المنصة
+            const meshMat = mat.clone();
+            if (meshMat.map) {
+                meshMat.map = mat.map.clone();
+                meshMat.map.needsUpdate = true;
+                meshMat.map.repeat.set(Math.max(1, Math.round(width / 4)), Math.max(1, Math.round(height / 3)));
+            }
+
+            const geo = new THREE.BoxGeometry(width, height, 4.6);
+            const mesh = new THREE.Mesh(geo, meshMat);
+            mesh.position.set(x, centerY, 0);
+            mesh.receiveShadow = true;
+            mesh.castShadow = true;
+            scene.add(mesh);
+            decorations.push(mesh);
+
+            if (style === 'basalt_grass') {
+                const grassCap = new THREE.Mesh(new THREE.BoxGeometry(width + 0.16, 0.36, 4.76), MATS.grass);
+                grassCap.position.set(x, topY - 0.12, 0);
+                grassCap.receiveShadow = true;
+                scene.add(grassCap);
+                decorations.push(grassCap);
+
+                // إضافة خصلات عشب وزهور شقائق النعمان الجبلية فوق المنصة
+                for (let gx = x - width / 2 + 1.2; gx < x + width / 2 - 1.2; gx += 2.8) {
+                    const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.45, 5), MATS.grassBright);
+                    tuft.position.set(gx, topY + 0.2, (Math.random() > 0.5 ? 1 : -1) * (1.5 + Math.random() * 0.5));
+                    scene.add(tuft);
+                    decorations.push(tuft);
+
+                    if (Math.random() > 0.55) {
+                        const poppy = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8), MATS.apple);
+                        poppy.position.set(gx + 0.25, topY + 0.35, tuft.position.z);
+                        scene.add(poppy);
+                        decorations.push(poppy);
+                    }
+                }
+            } else if (style === 'roman') {
+                // إفريز روماني مزخرف أعلى المنصة
+                const trim = new THREE.Mesh(new THREE.BoxGeometry(width + 0.2, 0.28, 4.8), MATS.roman);
+                trim.position.set(x, topY - 0.1, 0);
+                scene.add(trim);
+                decorations.push(trim);
+            }
+
+            platforms.push({
+                mesh,
+                x,
+                y: centerY,
+                w: width,
+                h: height,
+                top: topY,
+                bottom: topY - height,
+                isHazard: style === 'lava'
+            });
+        }
+
+        // أنبوب بازلتي/أخضر كلاسيكي
+        function addPipe(x, groundTopY, pipeHeight = 2.6, withPiranha = false) {
+            const group = new THREE.Group();
+            const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, pipeHeight, 20), MATS.pipe);
+            shaft.position.y = pipeHeight / 2;
+            shaft.castShadow = true;
+            shaft.receiveShadow = true;
+            group.add(shaft);
+
+            const lip = new THREE.Mesh(new THREE.CylinderGeometry(0.98, 0.98, 0.45, 20), MATS.pipe);
+            lip.position.y = pipeHeight - 0.22;
+            lip.castShadow = true;
+            group.add(lip);
+
+            const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 0.08, 16), new THREE.MeshBasicMaterial({ color: 0x050505 }));
+            hole.position.y = pipeHeight + 0.01;
+            group.add(hole);
+
+            group.position.set(x, groundTopY, 0);
+            scene.add(group);
+            decorations.push(group);
+
+            const topY = groundTopY + pipeHeight;
+            platforms.push({
+                mesh: group,
+                x,
+                y: groundTopY + pipeHeight / 2,
+                w: 1.85,
+                h: pipeHeight,
+                top: topY,
+                bottom: groundTopY,
+                isHazard: false
+            });
+
+            if (withPiranha) {
+                addPipePiranha(x, topY);
+            }
+        }
+
+        // شجرة تفاح السويداء الكثيفة المفصلة
+        function addSuwaydaAppleTree(x, groundY, z = -3.6, scale = 1.0) {
+            const tree = new THREE.Group();
+
+            // جذع متفرع
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.52, 3.2, 10), MATS.wood);
+            trunk.position.y = 1.6;
+            trunk.castShadow = true;
+            tree.add(trunk);
+
+            // تيجان الأوراق المتعددة الكثيفة
+            const crownPositions = [
+                [0, 3.9, 0, 1.9],
+                [-1.1, 3.4, 0.4, 1.35],
+                [1.1, 3.5, -0.3, 1.4],
+                [0, 4.9, 0.2, 1.45],
+                [0.4, 3.3, 1.0, 1.2]
+            ];
+            crownPositions.forEach(([cx, cy, cz, r], idx) => {
+                const crown = new THREE.Mesh(
+                    new THREE.DodecahedronGeometry(r, 1),
+                    idx % 2 === 0 ? MATS.leaves : MATS.leavesLight
+                );
+                crown.position.set(cx, cy, cz);
+                crown.castShadow = true;
+                tree.add(crown);
+            });
+
+            // عناقيد وحبات تفاح السويداء الأحمر
+            const appleCoords = [
+                [-0.9, 3.3, 1.3], [0.8, 3.7, 1.2], [0.1, 2.9, 1.5],
+                [-0.4, 4.4, 1.1], [1.2, 3.1, 0.8], [-1.3, 3.8, 0.7],
+                [0.3, 4.7, 0.9]
+            ];
+            appleCoords.forEach(([ax, ay, az]) => {
+                const ap = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), MATS.apple);
+                ap.position.set(ax, ay, az);
+                tree.add(ap);
+            });
+
+            tree.position.set(x, groundY, z);
+            tree.scale.set(scale, scale, scale);
+            scene.add(tree);
+            decorations.push(tree);
+        }
+
+        // سناسل حجرية بازلتية تقليدية (الجدران الحجرية في بساتين السويداء)
+        function addBasaltStoneWall(x, groundY, length = 10, z = -2.4) {
+            const wall = new THREE.Group();
+            const base = new THREE.Mesh(new THREE.BoxGeometry(length, 1.1, 0.7), MATS.basalt);
+            base.position.y = 0.55;
+            wall.add(base);
+
+            for (let rx = -length / 2 + 0.5; rx < length / 2; rx += 0.9) {
+                const stone = new THREE.Mesh(new THREE.DodecahedronGeometry(0.36, 0), MATS.basalt);
+                stone.position.set(rx, 1.15, (Math.random() - 0.5) * 0.15);
+                wall.add(stone);
+            }
+            wall.position.set(x, groundY, z);
+            scene.add(wall);
+            decorations.push(wall);
+        }
+
+        // عريشة كروم العنب الجبلية (منطقة الكفر والسويداء)
+        function addGrapeVinePergola(x, groundY, width = 8, z = -3.2) {
+            const pergola = new THREE.Group();
+            // أعمدة خشبية
+            [-width / 2 + 0.4, width / 2 - 0.4].forEach(px => {
+                const post = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 3.6, 8), MATS.wood);
+                post.position.set(px, 1.8, 0);
+                pergola.add(post);
+            });
+            // العارضة العلوية والأوراق
+            const beam = new THREE.Mesh(new THREE.BoxGeometry(width, 0.22, 1.6), MATS.wood);
+            beam.position.y = 3.6;
+            pergola.add(beam);
+
+            const canopy = new THREE.Mesh(new THREE.BoxGeometry(width + 0.4, 0.5, 1.9), MATS.leavesLight);
+            canopy.position.y = 3.95;
+            pergola.add(canopy);
+
+            // عناقيد العنب المتدلية
+            for (let gx = -width / 2 + 1.0; gx <= width / 2 - 1.0; gx += 1.4) {
+                const cluster = new THREE.Group();
+                [[0, 0], [-0.1, 0.14], [0.1, 0.14], [0, 0.28]].forEach(([bx, by]) => {
+                    const berry = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 8), MATS.grape);
+                    berry.position.set(bx, by, 0.3);
+                    cluster.add(berry);
+                });
+                cluster.position.set(gx, 3.1, 0);
+                pergola.add(cluster);
+            }
+
+            pergola.position.set(x, groundY, z);
+            scene.add(pergola);
+            decorations.push(pergola);
+        }
+
+        // الأعمدة والقناطر الرومانية الأثرية (شهبا وقنوات)
+        function addRomanColonnade(x, groundY, numColumns = 3, spacing = 4.5, z = -3.8) {
+            const group = new THREE.Group();
+            for (let i = 0; i < numColumns; i++) {
+                const cx = i * spacing;
+                // قاعدة بازلتية ثم عمود روماني مخدد ثم تاج كورنثي
+                const base = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.7, 1.7), MATS.basalt);
+                base.position.set(cx, 0.35, 0);
+                group.add(base);
+
+                const col = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, 6.2, 16), MATS.roman);
+                col.position.set(cx, 3.8, 0);
+                col.castShadow = true;
+                group.add(col);
+
+                const cap = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.65, 1.65), MATS.roman);
+                cap.position.set(cx, 7.1, 0);
+                group.add(cap);
+            }
+            // الجسر الحجري العلوي (Architrave) فوق الأعمدة
+            if (numColumns > 1) {
+                const totalW = (numColumns - 1) * spacing + 2.0;
+                const beam = new THREE.Mesh(new THREE.BoxGeometry(totalW, 0.95, 1.6), MATS.roman);
+                beam.position.set(((numColumns - 1) * spacing) / 2, 7.85, 0);
+                group.add(beam);
+            }
+
+            group.position.set(x, groundY, z);
+            scene.add(group);
+            decorations.push(group);
+        }
+
+        // الجبال والتلال البركانية والمدرجات الجبلية في الخلفية البعيدة
+        function addSuwaydaVolcanicMountains(levelLength) {
+            for (let mx = -20; mx < levelLength + 40; mx += 32) {
+                const scale = 0.9 + Math.random() * 0.7;
+                const mGroup = new THREE.Group();
+
+                // المخروط البركاني البازلتي
+                const cone = new THREE.Mesh(
+                    new THREE.ConeGeometry(22 * scale, 30 * scale, 9),
+                    new THREE.MeshStandardMaterial({ color: 0x1d2028, roughness: 0.95 })
+                );
+                cone.position.y = 12 * scale;
+                mGroup.add(cone);
+
+                // فوهة البركان أو الثلج الخفيف على قمة جبل العرب
+                const peak = new THREE.Mesh(
+                    new THREE.ConeGeometry(6.5 * scale, 7 * scale, 9),
+                    new THREE.MeshStandardMaterial({ color: currentLevel === 4 ? 0xff3d00 : 0xcfd8dc, roughness: 0.7 })
+                );
+                peak.position.y = 23.6 * scale;
+                mGroup.add(peak);
+
+                // مدرجات زراعية خضراء عند سفح الجبل
+                for (let t = 1; t <= 3; t++) {
+                    const terrace = new THREE.Mesh(
+                        new THREE.CylinderGeometry((18 - t * 3) * scale, (19 - t * 3) * scale, 1.4, 9),
+                        MATS.grass
+                    );
+                    terrace.position.y = t * 2.2;
+                    mGroup.add(terrace);
+                }
+
+                mGroup.position.set(mx, -4, -36 - Math.random() * 14);
+                scene.add(mGroup);
+                decorations.push(mGroup);
+            }
+
+            // غيوم ثلاثية الأبعاد متحركة
+            clouds = [];
+            for (let cx = -15; cx < levelLength + 30; cx += 18) {
+                const cGroup = new THREE.Group();
+                const cMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+                [[0, 0, 0, 1.6], [-1.4, -0.3, 0.2, 1.2], [1.4, -0.2, -0.2, 1.25], [0.5, 0.6, 0, 1.1]].forEach(([x, y, z, r]) => {
+                    const puff = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 12), cMat);
+                    puff.position.set(x, y, z);
+                    cGroup.add(puff);
+                });
+                cGroup.position.set(cx, 15 + Math.random() * 5, -14 - Math.random() * 10);
+                scene.add(cGroup);
+                decorations.push(cGroup);
+                clouds.push(cGroup);
+            }
+
+            // أسراب طيور تحلق في سماء السويداء البعيدة
+            skyBirds = [];
+            for (let bx = 0; bx < levelLength; bx += 28) {
+                const bGroup = new THREE.Group();
+                const bMat = new THREE.MeshBasicMaterial({ color: 0x263238 });
+                const wL = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.05, 0.18), bMat);
+                wL.position.x = -0.2;
+                const wR = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.05, 0.18), bMat);
+                wR.position.x = 0.2;
+                bGroup.add(wL, wR);
+                bGroup.position.set(bx, 12 + Math.random() * 6, -9 - Math.random() * 6);
+                scene.add(bGroup);
+                decorations.push(bGroup);
+                skyBirds.push({ group: bGroup, wL, wR, phase: Math.random() * 6 });
+            }
+        }
+
+        // قلعة صلخد التاريخية الضخمة وراية النصر
+        function addSalkhadCastleAndFlag(flagX, groundY) {
+            createGoalFlag(flagX, groundY);
+
+            const castle = new THREE.Group();
+            const cX = flagX + 9.5;
+
+            // القاعدة الصخرية البركانية للقلعة
+            const hill = new THREE.Mesh(new THREE.CylinderGeometry(8.5, 11, 4, 12), MATS.basalt);
+            hill.position.y = 2;
+            castle.add(hill);
+
+            // البرج الأسطواني الرئيسي لقلعة صلخد
+            const mainKeep = new THREE.Mesh(new THREE.CylinderGeometry(6.2, 7.2, 13, 16), MATS.basalt);
+            mainKeep.position.y = 9.5;
+            mainKeep.castShadow = true;
+            castle.add(mainKeep);
+
+            // حزام الحجر الروماني المزخرف حول القلعة
+            const band = new THREE.Mesh(new THREE.CylinderGeometry(6.55, 6.55, 1.1, 16), MATS.roman);
+            band.position.y = 12.5;
+            castle.add(band);
+
+            // شرفات القلعة الدفاعية
+            for (let i = 0; i < 14; i++) {
+                const ang = (i / 14) * Math.PI * 2;
+                const merlon = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.5, 1.3), MATS.basalt);
+                merlon.position.set(Math.cos(ang) * 5.8, 16.5, Math.sin(ang) * 5.8);
+                castle.add(merlon);
+            }
+
+            // بوابة القلعة المقوسة والمشاعل النارية
+            const gate = new THREE.Mesh(new THREE.BoxGeometry(3.2, 5.2, 1.2), MATS.wood);
+            gate.position.set(0, 6.2, 6.5);
+            castle.add(gate);
+
+            castle.position.set(cX, groundY - 1, -6.5);
+            scene.add(castle);
+            decorations.push(castle);
+        }
+
+        function createGoalFlag(x, groundY) {
+            const group = new THREE.Group();
+
+            const base = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.0, 1.6), MATS.basalt);
+            base.position.y = 0.5;
+            group.add(base);
+
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 11, 12), MATS.gold);
+            pole.position.y = 6.0;
+            group.add(pole);
+
+            const orb = new THREE.Mesh(new THREE.SphereGeometry(0.38, 14, 14), MATS.gold);
+            orb.position.y = 11.6;
+            group.add(orb);
+
+            const bannerTex = createYamanShirtTexture('#d32f2f', '#ffd700');
+            const flagMesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(3.2, 2.0),
+                new THREE.MeshBasicMaterial({ map: bannerTex, side: THREE.DoubleSide })
+            );
+            flagMesh.position.set(1.65, 10.2, 0);
+            group.add(flagMesh);
+
+            group.position.set(x, groundY, 0);
+            scene.add(group);
+            decorations.push(group);
+
+            goalFlag = { group, flagMesh, x, y: groundY };
+        }
+
+        // منصة متحركة
+        function addMovingPlatform(x, y, width, rangeX, rangeY, speed = 0.045) {
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.7, 3.6), MATS.roman);
+            mesh.position.set(x, y, 0);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+            decorations.push(mesh);
+
+            const mp = {
+                mesh,
+                x,
+                y,
+                baseX: x,
+                baseY: y,
+                w: width,
+                h: 0.7,
+                top: y + 0.35,
+                bottom: y - 0.35,
+                rangeX,
+                rangeY,
+                speed,
+                phase: Math.random() * Math.PI * 2,
+                dx: 0,
+                dy: 0,
+                isHazard: false
+            };
+            platforms.push(mp);
+            movingPlatforms.push(mp);
+        }
+
+        // نوابض القفز العالي (Springboard)
+        function addSpring(x, groundTopY) {
+            const group = new THREE.Group();
+            const base = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.25, 1.3), MATS.basalt);
+            base.position.y = 0.12;
+            const coil = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.45, 12), MATS.gold);
+            coil.position.y = 0.45;
+            const topPad = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.25, 1.4), MATS.apple);
+            topPad.position.y = 0.8;
+            group.add(base, coil, topPad);
+            group.position.set(x, groundTopY, 0);
+            scene.add(group);
+            decorations.push(group);
+
+            springs.push({ group, x, y: groundTopY });
+        }
+
+        // =========================================================================
+        // 9. زعيم قلعة صلخد: التنين البركاني البازلتي (Boss Battle)
+        // =========================================================================
+        function createSalkhadBoss(x, groundY) {
+            const group = new THREE.Group();
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x263238, roughness: 0.5, metalness: 0.3 });
+            const shellMat = new THREE.MeshStandardMaterial({ color: 0xb71c1c, roughness: 0.4 });
+            const hornMat = new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.2, metalness: 0.7 });
+            const lavaEye = new THREE.MeshBasicMaterial({ color: 0xffea00 });
+
+            // الجذع المدرع الضخم
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(2.6, 2.5, 2.0), bodyMat);
+            torso.position.y = 1.6;
+            torso.castShadow = true;
+            group.add(torso);
+
+            // الدرع الشائك على الظهر
+            const shell = new THREE.Mesh(new THREE.SphereGeometry(1.5, 12, 12), shellMat);
+            shell.position.set(0.4, 1.8, 0);
+            group.add(shell);
+
+            for (let sy = 1.0; sy <= 2.6; sy += 0.7) {
+                const spike = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.75, 8), hornMat);
+                spike.rotation.z = -0.6;
+                spike.position.set(1.5, sy, 0);
+                group.add(spike);
+            }
+
+            // الرأس والقرون والعيون النارية
+            const head = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.2, 1.4), bodyMat);
+            head.position.set(-1.2, 2.6, 0);
+            group.add(head);
+
+            [-0.5, 0.5].forEach(hz => {
+                const horn = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.9, 8), hornMat);
+                horn.position.set(-1.1, 3.5, hz);
+                horn.rotation.z = 0.35;
+                group.add(horn);
+
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 10), lavaEye);
+                eye.position.set(-1.85, 2.75, hz * 0.7);
+                group.add(eye);
+            });
+
+            group.position.set(x, groundY, 0);
+            scene.add(group);
+            decorations.push(group);
+
+            boss = {
+                mesh: group,
+                x,
+                y: groundY,
+                baseY: groundY,
+                minX: x - 10,
+                maxX: x + 4,
+                hp: 6,
+                maxHp: 6,
+                vx: -0.06,
+                vy: 0,
+                fireTimer: 0,
+                jumpTimer: 0,
+                alive: true
+            };
+
+            document.getElementById('boss-hud').style.display = 'block';
+            document.getElementById('boss-bar-fill').style.width = '100%';
+        }
+
+        // =========================================================================
+        // 10. بناء المراحل الأربع الكاملة في ربوع محافظة السويداء
+        // =========================================================================
+        function clearCurrentLevel() {
+            decorations.forEach(d => scene.remove(d));
+            blocks.forEach(b => scene.remove(b.mesh));
+            items.forEach(i => scene.remove(i.mesh));
+            enemies.forEach(e => scene.remove(e.mesh));
+            fireballs.forEach(f => scene.remove(f.mesh));
+            particles.forEach(p => scene.remove(p.mesh));
+
+            platforms = [];
+            blocks = [];
+            items = [];
+            enemies = [];
+            fireballs = [];
+            particles = [];
+            movingPlatforms = [];
+            springs = [];
+            decorations = [];
+            goalFlag = null;
+            boss = null;
+            document.getElementById('boss-hud').style.display = 'none';
+        }
+
+        function loadLevel(lvl) {
+            currentLevel = lvl;
+            clearCurrentLevel();
+
+            // تحديث أزرار المرحلة
+            for (let i = 1; i <= 4; i++) {
+                const b = document.getElementById('lvl-btn-' + i);
+                if (b) b.classList.toggle('active', i === lvl);
+            }
+
+            // إعادة تموضع البطل يمان في بداية المرحلة
+            playerState.x = 2;
+            playerState.y = 2.5;
+            playerState.vx = 0;
+            playerState.vy = 0;
+
+            if (lvl === 1) {
+                // ===============================================================
+                // المرحلة 1-1: سهول البازلت وبساتين التفاح (ظهر الجبل - السويداء)
+                // ===============================================================
+                document.getElementById('hud-level').innerText = '1-1 سهول البازلت وبساتين التفاح';
+                scene.background = new THREE.Color(0x5cacee);
+                scene.fog = new THREE.FogExp2(0x87ceeb, 0.0045);
+
+                addSuwaydaVolcanicMountains(220);
+
+                // المنصات البازلتية المغطاة بالعشب
+                addPlatform(18, 0, 44, 4, 'basalt_grass');
+                addPlatform(56, 0, 22, 4, 'basalt_grass');
+                addPlatform(88, 1.5, 28, 4, 'basalt_grass');
+                addPlatform(124, 0, 32, 4, 'basalt_grass');
+                addPlatform(160, 2.0, 22, 4, 'basalt_grass');
+                addPlatform(196, 0, 42, 4, 'basalt_grass');
+
+                // الأنابيب البازلتية الخضراء
+                addPipe(28, 0, 2.4, false);
+                addPipe(62, 0, 2.8, true);
+                addPipe(132, 0, 2.6, true);
+
+                // الصناديق المرفوعة (ارتفاع مثالي 3.8 فوق الأرض يضمن مرور يمان وسوبر يمان من تحتها بسهولة تامة!)
+                addOverheadBlock(10, 3.8, 'question', 'coin');
+                addOverheadBlock(13.6, 3.8, 'brick', 'empty');
+                addOverheadBlock(14.8, 3.8, 'question', 'apple'); // تفاحة السويداء!
+                addOverheadBlock(16.0, 3.8, 'brick', 'empty');
+                addOverheadBlock(17.2, 3.8, 'question', 'coin');
+                addOverheadBlock(15.4, 7.6, 'question', 'multicoin'); // صف علوي ثانٍ
+
+                addOverheadBlock(52, 3.8, 'brick', 'empty');
+                addOverheadBlock(53.2, 3.8, 'question', 'fireflower'); // زهرة النار الجبلية!
+                addOverheadBlock(54.4, 3.8, 'brick', 'empty');
+
+                addOverheadBlock(84, 5.3, 'question', 'coin');
+                addOverheadBlock(86.4, 5.3, 'question', 'apple');
+                addOverheadBlock(88.8, 5.3, 'question', 'coin');
+
+                addOverheadBlock(118, 3.8, 'brick', 'empty');
+                addOverheadBlock(119.2, 3.8, 'question', 'multicoin');
+                addOverheadBlock(120.4, 3.8, 'brick', 'empty');
+
+                // أشجار تفاح السويداء والسناسل الحجرية
+                [6, 20, 34, 50, 80, 96, 114, 140, 180, 190].forEach((tx, idx) => {
+                    const gy = (tx >= 74 && tx <= 102) ? 1.5 : 0;
+                    addSuwaydaAppleTree(tx, gy, -3.5 - (idx % 2), 0.95 + (idx % 3) * 0.12);
+                });
+                addBasaltStoneWall(14, 0, 12, -2.5);
+                addBasaltStoneWall(90, 1.5, 14, -2.5);
+                addBasaltStoneWall(185, 0, 14, -2.5);
+
+                // العملات الذهبية
+                [24, 26, 30, 32, 44, 46, 70, 72, 106, 108, 156, 158, 162, 164].forEach(cx => addCoin(cx, 3.2));
+
+                // الحيوانات المهاجمة
+                addEnemy('boar', 22, 0, 10, 26);
+                addEnemy('tortoise', 55, 0, 47, 60);
+                addEnemy('boar', 92, 1.5, 76, 100);
+                addEnemy('scorpion', 122, 0, 110, 130);
+                addEnemy('falcon', 146, 5.5, 135, 165);
+                addEnemy('tortoise', 160, 2.0, 151, 169);
+                addEnemy('boar', 186, 0, 176, 198);
+
+                addSalkhadCastleAndFlag(204, 0);
+
+            } else if (lvl === 2) {
+                // ===============================================================
+                // المرحلة 1-2: آثار شهبا وقنوات الرومانية التاريخية
+                // ===============================================================
+                document.getElementById('hud-level').innerText = '1-2 آثار شهبا وقنوات الرومانية';
+                scene.background = new THREE.Color(0xe67e22); // غروب ذهبي ساحر فوق الآثار
+                scene.fog = new THREE.FogExp2(0xd35400, 0.0045);
+
+                addSuwaydaVolcanicMountains(230);
+
+                addPlatform(14, 0, 32, 4, 'roman');
+                addPlatform(48, 2.0, 20, 4, 'roman');
+                addMovingPlatform(68, 3.0, 7, 6, 0, 0.05);
+                addPlatform(92, 3.5, 26, 4, 'roman');
+                addMovingPlatform(116, 4.0, 7, 0, 3.0, 0.05);
+                addPlatform(138, 1.5, 28, 4, 'roman');
+                addPlatform(172, 4.0, 18, 4, 'roman');
+                addPlatform(204, 0, 38, 4, 'roman');
+
+                // الأعمدة والقناطر الرومانية في الخلفية
+                addRomanColonnade(6, 0, 4, 4.8, -3.8);
+                addRomanColonnade(42, 2.0, 3, 4.8, -3.8);
+                addRomanColonnade(84, 3.5, 4, 4.8, -3.8);
+                addRomanColonnade(130, 1.5, 4, 4.8, -3.8);
+                addRomanColonnade(192, 0, 3, 4.8, -3.8);
+
+                // الصناديق المرفوعة بأمان تام
+                addOverheadBlock(12, 3.8, 'question', 'apple');
+                addOverheadBlock(14.5, 3.8, 'question', 'coin');
+                addOverheadBlock(17, 3.8, 'question', 'fireflower');
+
+                addOverheadBlock(46, 5.8, 'brick', 'empty');
+                addOverheadBlock(47.2, 5.8, 'question', 'multicoin');
+                addOverheadBlock(48.4, 5.8, 'brick', 'empty');
+
+                addOverheadBlock(90, 7.3, 'question', 'apple');
+                addOverheadBlock(93, 7.3, 'question', 'fireflower');
+
+                addOverheadBlock(138, 5.3, 'question', 'multicoin');
+
+                // الذهب والأعداء
+                [34, 36, 65, 68, 71, 114, 116, 118, 156, 158, 170, 174].forEach(cx => addCoin(cx, 5.8));
+
+                addEnemy('scorpion', 20, 0, 8, 28);
+                addEnemy('tortoise', 48, 2.0, 40, 56);
+                addEnemy('falcon', 70, 6.8, 58, 82);
+                addEnemy('boar', 92, 3.5, 81, 103);
+                addEnemy('scorpion', 138, 1.5, 126, 150);
+                addEnemy('falcon', 162, 7.2, 150, 178);
+                addEnemy('boar', 196, 0, 186, 206);
+
+                addSalkhadCastleAndFlag(212, 0);
+
+            } else if (lvl === 3) {
+                // ===============================================================
+                // المرحلة 1-3: كروم العنب ومرتفعات الكفر الخضراء
+                // ===============================================================
+                document.getElementById('hud-level').innerText = '1-3 كروم العنب ومرتفعات الكفر';
+                scene.background = new THREE.Color(0x29b6f6);
+                scene.fog = new THREE.FogExp2(0x81d4fa, 0.004);
+
+                addSuwaydaVolcanicMountains(230);
+
+                addPlatform(16, 0, 36, 4, 'basalt_grass');
+                addPlatform(48, 3.5, 18, 4, 'basalt_grass');
+                addPlatform(74, 6.5, 20, 4, 'basalt_grass');
+                addPlatform(104, 1.5, 26, 4, 'basalt_grass');
+                addMovingPlatform(128, 3.5, 7, 7, 2.0, 0.05);
+                addPlatform(152, 4.5, 24, 4, 'basalt_grass');
+                addPlatform(192, 0, 44, 4, 'basalt_grass');
+
+                // نوابض القفز العالي للمرتفعات
+                addSpring(30, 0);
+                addSpring(54, 3.5);
+                addSpring(114, 1.5);
+
+                // عرائش العنب وأشجار التفاح
+                addGrapeVinePergola(10, 0, 10, -3.2);
+                addGrapeVinePergola(48, 3.5, 10, -3.2);
+                addGrapeVinePergola(74, 6.5, 12, -3.2);
+                addGrapeVinePergola(104, 1.5, 12, -3.2);
+                addGrapeVinePergola(152, 4.5, 12, -3.2);
+                addSuwaydaAppleTree(22, 0, -3.8, 1.1);
+                addSuwaydaAppleTree(180, 0, -3.8, 1.1);
+
+                // الصناديق المرفوعة
+                addOverheadBlock(12, 3.8, 'question', 'apple');
+                addOverheadBlock(15, 3.8, 'question', 'fireflower');
+                addOverheadBlock(72, 10.3, 'question', 'multicoin');
+                addOverheadBlock(102, 5.3, 'question', 'apple');
+                addOverheadBlock(105, 5.3, 'question', 'fireflower');
+                addOverheadBlock(150, 8.3, 'question', 'multicoin');
+
+                [30, 46, 50, 70, 74, 78, 126, 130, 150, 154, 182, 186].forEach(cx => addCoin(cx, 8.2));
+
+                addEnemy('boar', 20, 0, 8, 28);
+                addEnemy('tortoise', 48, 3.5, 40, 54);
+                addEnemy('falcon', 64, 8.5, 52, 82);
+                addEnemy('boar', 74, 6.5, 66, 82);
+                addEnemy('scorpion', 104, 1.5, 93, 112);
+                addEnemy('falcon', 132, 7.5, 118, 146);
+                addEnemy('tortoise', 152, 4.5, 142, 162);
+                addEnemy('boar', 186, 0, 174, 196);
+
+                addSalkhadCastleAndFlag(204, 0);
+
+            } else if (lvl === 4) {
+                // ===============================================================
+                // المرحلة 1-4: قلعة صلخد التاريخية والمواجهة الكبرى (الزعيم)
+                // ===============================================================
+                document.getElementById('hud-level').innerText = '1-4 قلعة صلخد التاريخية (الزعيم)';
+                scene.background = new THREE.Color(0x120d1d);
+                scene.fog = new THREE.FogExp2(0x1f1124, 0.005);
+
+                addSuwaydaVolcanicMountains(210);
+
+                // بحر الحمم البركانية أسفل القلعة
+                addPlatform(100, -5.5, 240, 2, 'lava');
+
+                addPlatform(14, 0, 30, 4, 'basalt');
+                addPlatform(42, 2.0, 16, 4, 'basalt');
+                addMovingPlatform(60, 2.5, 6.5, 5, 0, 0.055);
+                addPlatform(82, 3.0, 22, 4, 'basalt');
+                addPlatform(112, 1.0, 20, 4, 'basalt');
+                // ساحة معركة قلعة صلخد الكبرى
+                addPlatform(158, 0, 56, 4, 'basalt');
+
+                addRomanColonnade(8, 0, 3, 5, -3.8);
+                addRomanColonnade(76, 3.0, 3, 5, -3.8);
+                addRomanColonnade(140, 0, 5, 6, -4.2);
+
+                // صناديق الإمداد قبل المعركة الكبرى
+                addOverheadBlock(10, 3.8, 'question', 'apple');
+                addOverheadBlock(13, 3.8, 'question', 'fireflower');
+                addOverheadBlock(80, 6.8, 'question', 'apple');
+                addOverheadBlock(83, 6.8, 'question', 'fireflower');
+                addOverheadBlock(136, 3.8, 'question', 'apple');
+                addOverheadBlock(139, 3.8, 'question', 'fireflower');
+
+                [40, 44, 78, 82, 86, 110, 114, 142, 146].forEach(cx => addCoin(cx, 5.2));
+
+                addEnemy('scorpion', 20, 0, 8, 26);
+                addEnemy('boar', 42, 2.0, 35, 49);
+                addEnemy('scorpion', 82, 3.0, 72, 92);
+                addEnemy('falcon', 100, 6.0, 88, 115);
+                addEnemy('tortoise', 112, 1.0, 104, 120);
+
+                // زعيم قلعة صلخد
+                createSalkhadBoss(162, 0);
+                addSalkhadCastleAndFlag(178, 0);
+            }
+
+            updateHUD();
+        }
+
+        // =========================================================================
+        // 11. المؤثرات البصرية وشظايا الصخور وكرات اللهب
+        // =========================================================================
+        function spawnBurstParticles(x, y, colorHex, count = 14) {
+            const mat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.5 });
+            for (let i = 0; i < count; i++) {
+                const p = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.26, 0.26), mat);
+                p.position.set(x, y, 0);
+                scene.add(p);
+                particles.push({
+                    mesh: p,
+                    vx: (Math.random() - 0.5) * 0.34,
+                    vy: 0.14 + Math.random() * 0.28,
+                    vz: (Math.random() - 0.5) * 0.25,
+                    life: 45
+                });
+            }
+        }
+
+        function shootFireball() {
+            if (playerState.powerState !== 2 || playerState.fireCooldown > 0) return;
+            sfxFireball();
+            playerState.fireCooldown = 18;
+
+            const mesh = new THREE.Mesh(
+                new THREE.SphereGeometry(0.26, 12, 12),
+                new THREE.MeshBasicMaterial({ color: 0xff5722 })
+            );
+            const fx = playerState.x + playerState.facing * 0.85;
+            const fy = playerState.y + 1.1;
+            mesh.position.set(fx, fy, 0);
+            scene.add(mesh);
+
+            fireballs.push({
+                mesh,
+                x: fx,
+                y: fy,
+                vx: playerState.facing * 0.42,
+                vy: -0.05,
+                bounces: 0,
+                active: true
+            });
+        }
+
+        // =========================================================================
+        // 12. الفيزياء والتصادم الدقيق ثنائي المراحل (Swept AABB Physics Engine)
+        // =========================================================================
+        function triggerOverheadBlock(b) {
+            if (!b.active) return;
+
+            if (b.used) {
+                sfxBump();
+                b.bounceOffset = 0.25;
+                return;
+            }
+
+            b.bounceOffset = 0.38;
+
+            if (b.blockType === 'brick' && b.content === 'empty') {
+                // إذا كان سوبر يمان أو يمان الناري فإنه يحطم صخور الطوب إلى شظايا متناثرة!
+                if (playerState.powerState >= 1) {
+                    sfxBreak();
+                    b.active = false;
+                    b.mesh.visible = false;
+                    score += 50;
+                    updateHUD();
+                    spawnBurstParticles(b.x, b.y, 0x8d5538, 16);
+                } else {
+                    sfxBump();
+                }
+                return;
+            }
+
+            // صندوق الاستفهام أو طوب بداخله مكافأة
+            spawnPowerUpFromBlock(b);
+            b.hitsLeft--;
+            if (b.hitsLeft <= 0) {
+                b.used = true;
+                b.mesh.material = MATS.usedBlock;
+            }
+
+            // أي عدو يقف فوق الصندوق لحظة ضربه من الأسفل يطير ويهزم فوراً!
+            for (const e of enemies) {
+                if (e.alive && Math.abs(e.x - b.x) < 1.2 && Math.abs(e.y - (b.y + b.h / 2)) < 0.6) {
+                    e.alive = false;
+                    e.mesh.visible = false;
+                    score += 200;
+                    spawnBurstParticles(e.x, e.y + 0.5, 0xffeb3b, 12);
+                }
+            }
+        }
+
+        function hurtPlayer() {
+            if (playerState.invulnerableTimer > 0) return;
+
+            if (playerState.powerState > 0) {
+                // العودة لحالة يمان العادي بدلاً من خسارة محاولة
+                sfxHurt();
+                playerState.powerState = 0;
+                playerState.invulnerableTimer = 95;
+                updatePlayerPowerVisuals();
+                showToast('⚠️ فقدت درع القوة! احذر من الأعداء');
+                return;
+            }
+
+            sfxHurt();
+            lives--;
+            updateHUD();
+
+            if (lives <= 0) {
+                showOverlayScreen(
+                    'انتهت المحاولات يا بطل!',
+                    'لا تستسلم يا <b>YAMAN NASIR</b>! جبل العرب ينتظر عودتك القوية لإتمام المهمة.',
+                    'إعادة المغامرة من جديد',
+                    () => {
+                        lives = 5;
+                        score = 0;
+                        coinsCount = 0;
+                        playerState.powerState = 0;
+                        updatePlayerPowerVisuals();
+                        loadLevel(currentLevel);
+                        resumeGame();
+                    }
+                );
+            } else {
+                playerState.x = 2;
+                playerState.y = 3;
+                playerState.vx = 0;
+                playerState.vy = 0;
+                playerState.invulnerableTimer = 90;
+                showToast('❤️ محاولة جديدة للبطل يمان ناصر!');
+            }
+        }
+
+        function updatePhysicsAndGameplay(dt) {
+            if (!gameActive) return;
+
+            const p = playerState;
+            if (p.invulnerableTimer > 0) p.invulnerableTimer--;
+            if (p.fireCooldown > 0) p.fireCooldown--;
+
+            // 1. تحديث المنصات المتحركة
+            for (const mp of movingPlatforms) {
+                mp.phase += mp.speed;
+                const newX = mp.baseX + Math.sin(mp.phase) * mp.rangeX;
+                const newY = mp.baseY + Math.cos(mp.phase) * mp.rangeY;
+                mp.dx = newX - mp.x;
+                mp.dy = newY - mp.y;
+                mp.x = newX;
+                mp.y = newY;
+                mp.top = mp.y + mp.h / 2;
+                mp.bottom = mp.y - mp.h / 2;
+                mp.mesh.position.set(mp.x, mp.y, 0);
+            }
+
+            // 2. تحديث حركة اللاعب الأفقية (X-Axis)
+            const moveSpeed = 0.21;
+            if (keys.right) {
+                p.vx = moveSpeed;
+                p.facing = 1;
+            } else if (keys.left) {
+                p.vx = -moveSpeed;
+                p.facing = -1;
+            } else {
+                p.vx *= 0.72;
+                if (Math.abs(p.vx) < 0.005) p.vx = 0;
+            }
+
+            if (keys.fire) {
+                shootFireball();
+            }
+
+            p.x += p.vx;
+            if (p.x < -2) p.x = -2;
+
+            const halfW = p.width / 2;
+
+            // فحص التصادم الأفقي مع المنصات والأنابيب
+            for (const plat of platforms) {
+                if (plat.isHazard) continue;
+                const pMinY = p.y + 0.18;
+                const pMaxY = p.y + p.height - 0.15;
+                if (pMaxY > plat.bottom && pMinY < plat.top) {
+                    const platLeft = plat.x - plat.w / 2;
+                    const platRight = plat.x + plat.w / 2;
+                    if (p.x + halfW > platLeft && p.x - halfW < platRight) {
+                        if (p.vx > 0) p.x = platLeft - halfW;
+                        else if (p.vx < 0) p.x = platRight + halfW;
+                    }
+                }
+            }
+
+            // فحص التصادم الأفقي مع الصناديق (فقط إذا كان جسم اللاعب بمستوى الصندوق فعلياً)
+            for (const b of blocks) {
+                if (!b.active) continue;
+                const bTop = b.y + b.h / 2;
+                const bBottom = b.y - b.h / 2;
+                const pMinY = p.y + 0.18;
+                const pMaxY = p.y + p.height - 0.18;
+
+                if (pMaxY > bBottom && pMinY < bTop) {
+                    const bLeft = b.x - b.w / 2;
+                    const bRight = b.x + b.w / 2;
+                    if (p.x + halfW > bLeft && p.x - halfW < bRight) {
+                        if (p.vx > 0) p.x = bLeft - halfW;
+                        else if (p.vx < 0) p.x = bRight + halfW;
+                    }
+                }
+            }
+
+            // 3. القفز والجاذبية (Y-Axis)
+            const jumpForce = 0.455;
+            const gravity = 0.0175;
+
+            if (keys.up && p.isGrounded && !jumpPressedLastFrame) {
+                p.vy = jumpForce;
+                p.isGrounded = false;
+                sfxJump();
+            }
+            jumpPressedLastFrame = keys.up;
+
+            const prevY = p.y;
+            p.vy -= gravity;
+            if (p.vy < -0.55) p.vy = -0.55;
+            p.y += p.vy;
+            p.isGrounded = false;
+
+            // فحص التصادم العمودي مع المنصات (الهبوط على المنصات)
+            for (const plat of platforms) {
+                const platLeft = plat.x - plat.w / 2;
+                const platRight = plat.x + plat.w / 2;
+                if (p.x + halfW > platLeft + 0.06 && p.x - halfW < platRight - 0.06) {
+                    if (plat.isHazard) {
+                        if (p.y < plat.top) {
+                            hurtPlayer();
+                            return;
+                        }
+                        continue;
+                    }
+                    // الهبوط على السطح العلوي للمنصة
+                    if (p.vy <= 0 && prevY >= plat.top - 0.28 && p.y <= plat.top) {
+                        p.y = plat.top;
+                        p.vy = 0;
+                        p.isGrounded = true;
+                        if (plat.dx) p.x += plat.dx;
+                    }
+                }
+            }
+
+            // فحص التصادم العمودي مع الصناديق (ضرب الصندوق من الأسفل بالرأس أو الوقوف فوقه)
+            for (const b of blocks) {
+                if (!b.active) continue;
+                const bLeft = b.x - b.w / 2;
+                const bRight = b.x + b.w / 2;
+                const bTop = b.y + b.h / 2;
+                const bBottom = b.y - b.h / 2;
+
+                if (p.x + halfW > bLeft + 0.08 && p.x - halfW < bRight - 0.08) {
+                    // 1) الهبوط فوق الصندوق
+                    if (p.vy <= 0 && prevY >= bTop - 0.25 && p.y <= bTop) {
+                        p.y = bTop;
+                        p.vy = 0;
+                        p.isGrounded = true;
+                    }
+                    // 2) ضرب الصندوق بالرأس من الأسفل أثناء القفز للأعلى
+                    else if (p.vy > 0 && (prevY + p.height) <= bBottom + 0.28 && (p.y + p.height) >= bBottom) {
+                        p.y = bBottom - p.height;
+                        p.vy = -0.05;
+                        triggerOverheadBlock(b);
+                    }
+                }
+
+                // حركة ارتداد الصندوق عند ضربه
+                if (b.bounceOffset > 0) {
+                    b.bounceOffset = Math.max(0, b.bounceOffset - 0.04);
+                    b.mesh.position.y = b.baseY + Math.sin(b.bounceOffset * Math.PI * 2.5) * 0.35;
+                } else {
+                    b.mesh.position.y = b.baseY;
+                }
+            }
+
+            // نوابض القفز العالي
+            for (const sp of springs) {
+                if (Math.abs(p.x - sp.x) < 0.95 && Math.abs(p.y - sp.y) < 0.9 && p.vy <= 0) {
+                    p.vy = jumpForce * 1.48;
+                    p.isGrounded = false;
+                    sfxJump();
+                    showToast('🚀 قفزة جبل العرب العالية!');
+                }
+            }
+
+            // السقوط في الهاوية
+            if (p.y < -6.5) {
+                hurtPlayer();
+                return;
+            }
+
+            // 4. تحريك وتدوير نموذج البطل يمان ناصر
+            p.mesh.position.set(p.x, p.y, 0);
+
+            // وميض عند عدم القابلية للإصابة المؤقتة
+            p.mesh.visible = (p.invulnerableTimer % 4 < 2);
+
+            // زاوية دوران تظهر الصدر المكتوب عليه YAMAN NASIR للكاميرا بوضوح
+            const targetRotY = (Math.abs(p.vx) > 0.01) ? (p.facing * Math.PI * 0.24) : 0;
+            p.mesh.rotation.y += (targetRotY - p.mesh.rotation.y) * 0.22;
+
+            // تحريك المفاصل (الذراعين والأرجل)
+            if (!p.isGrounded) {
+                // وضعية قفزة سوبر ماريو الشهيرة (يد مرفوعة للأعلى)
+                p.parts.rightArm.rotation.x = -2.4;
+                p.parts.leftArm.rotation.x = 0.6;
+                p.parts.leftLeg.rotation.x = -0.5;
+                p.parts.rightLeg.rotation.x = 0.5;
+            } else if (Math.abs(p.vx) > 0.01) {
+                p.walkCycle += 0.28;
+                const swing = Math.sin(p.walkCycle) * 0.75;
+                p.parts.leftLeg.rotation.x = swing;
+                p.parts.rightLeg.rotation.x = -swing;
+                p.parts.leftArm.rotation.x = -swing * 0.8;
+                p.parts.rightArm.rotation.x = swing * 0.8;
+            } else {
+                p.parts.leftLeg.rotation.x *= 0.8;
+                p.parts.rightLeg.rotation.x *= 0.8;
+                p.parts.leftArm.rotation.x *= 0.8;
+                p.parts.rightArm.rotation.x *= 0.8;
+            }
+
+            // 5. تحديث العناصر والمكافآت (العملات، تفاح السويداء، زهور النار)
+            for (const item of items) {
+                if (item.collected) continue;
+                item.mesh.rotation.y += 0.05;
+
+                if (item.dynamic) {
+                    item.vy -= 0.012;
+                    item.x += item.vx;
+                    item.y += item.vy;
+                    for (const plat of platforms) {
+                        if (!plat.isHazard && item.x >= plat.x - plat.w / 2 && item.x <= plat.x + plat.w / 2) {
+                            if (item.vy <= 0 && item.y <= plat.top + 0.45 && item.y >= plat.top - 0.5) {
+                                item.y = plat.top + 0.45;
+                                item.vy = 0;
+                            }
+                        }
+                    }
+                    item.mesh.position.set(item.x, item.y, 0);
+                }
+
+                // التقاط العنصر
+                if (Math.abs(p.x - item.x) < 1.1 && Math.abs((p.y + p.height / 2) - item.y) < 1.25) {
+                    item.collected = true;
+                    item.mesh.visible = false;
+
+                    if (item.type === 'coin') {
+                        sfxCoin();
+                        coinsCount++;
+                        score += 100;
+                        spawnBurstParticles(item.x, item.y, 0xffd700, 8);
+                    } else if (item.type === 'apple') {
+                        sfxPowerUp();
+                        if (p.powerState < 1) p.powerState = 1;
+                        score += 500;
+                        updatePlayerPowerVisuals();
+                        showToast('🍎 تفاحة السويداء السحرية! تحولت إلى سوبر يمان ناصر!');
+                        spawnBurstParticles(item.x, item.y, 0xd50000, 16);
+                    } else if (item.type === 'fireflower') {
+                        sfxPowerUp();
+                        p.powerState = 2;
+                        score += 1000;
+                        updatePlayerPowerVisuals();
+                        showToast('🔥 زهرة جبل العرب النارية! اضغط X أو Shift لإطلاق اللهب!');
+                        spawnBurstParticles(item.x, item.y, 0xff6d00, 18);
+                    }
+                    updateHUD();
+                }
+            }
+
+            // 6. تحديث الحيوانات المهاجمة والأعداء
+            for (const e of enemies) {
+                if (!e.alive) continue;
+                e.animPhase += 0.16;
+
+                if (e.type === 'piranha') {
+                    // نبتة الصبار تخرج وتدخل في الأنبوب وتتوقف إذا كان يمان بجانب الأنبوب مباشرة
+                    const distToPlayer = Math.abs(p.x - e.x);
+                    if (distToPlayer > 2.2 || e.y > e.baseY - 1.1) {
+                        const offset = Math.sin(e.animPhase * 0.35) * 1.15;
+                        e.y = e.baseY - 0.6 + Math.max(-0.9, offset);
+                        e.mesh.position.y = e.y;
+                    }
+                } else if (e.type === 'falcon') {
+                    // الصقر الجارح يحلق وينقض للأعلى والأسفل مع خفقان الأجنحة
+                    e.x += e.speed * e.dir;
+                    if (e.x > e.maxX) e.dir = -1;
+                    if (e.x < e.minX) e.dir = 1;
+                    e.y = e.baseY + Math.sin(e.animPhase * 0.45) * 1.35;
+                    e.mesh.position.set(e.x, e.y, 0);
+                    e.mesh.scale.x = e.dir;
+                    if (e.extraParts.leftWing) {
+                        const flap = Math.sin(e.animPhase * 2.2) * 0.55;
+                        e.extraParts.leftWing.rotation.x = flap;
+                        e.extraParts.rightWing.rotation.x = -flap;
+                    }
+                } else {
+                    // الحيوانات البرية (الخنزير البري، السلحفاة المدرعة، العقرب البازلتي)
+                    let currentSpeed = e.speed;
+                    // الخنزير البري يضاعف سرعته عند اقتراب اللاعب منه!
+                    if (e.type === 'boar' && Math.abs(p.x - e.x) < 7 && Math.abs(p.y - e.y) < 2) {
+                        currentSpeed = e.speed * 1.65;
+                    }
+                    if (e.state === 'shell_idle') currentSpeed = 0;
+                    if (e.state === 'shell_moving') currentSpeed = 0.34;
+
+                    e.x += currentSpeed * e.dir;
+                    if (e.x > e.maxX) e.dir = -1;
+                    if (e.x < e.minX) e.dir = 1;
+
+                    e.mesh.position.x = e.x;
+                    e.mesh.scale.x = e.dir;
+
+                    // تحريك الأرجل والذيل
+                    e.legs.forEach((leg, i) => {
+                        leg.rotation.x = currentSpeed > 0 ? Math.sin(e.animPhase + i) * 0.6 : 0;
+                    });
+                    if (e.extraParts.tailGroup) {
+                        e.extraParts.tailGroup.rotation.z = Math.sin(e.animPhase * 0.8) * 0.22;
+                    }
+                    if (e.state === 'shell_moving') {
+                        e.mesh.rotation.y += 0.35;
+                    }
+
+                    // القوقعة المنزلقة تصدم الأعداء الآخرين وتطيح بهم!
+                    if (e.state === 'shell_moving') {
+                        for (const other of enemies) {
+                            if (other !== e && other.alive && Math.abs(other.x - e.x) < 1.1 && Math.abs(other.y - e.y) < 1.2) {
+                                other.alive = false;
+                                other.mesh.visible = false;
+                                score += 200;
+                                sfxStomp();
+                                spawnBurstParticles(other.x, other.y + 0.5, 0xff9800, 12);
+                                updateHUD();
+                            }
+                        }
+                    }
+                }
+
+                // فحص التصادم بين البطل يمان والحيوان المهاجم
+                const dx = Math.abs(p.x - e.x);
+                const dy = p.y - e.y;
+
+                if (dx < 1.05 && dy < 1.35 && dy > -1.2) {
+                    // القفز فوق العدو (بشرط أن لا يكون عقرباً ساماً أو نبتة صبار شائكة، أو أن يكون قفزاً مباشراً)
+                    if (p.vy < 0 && dy > 0.35 && e.type !== 'piranha') {
+                        sfxStomp();
+                        p.vy = 0.36; // ارتداد للأعلى
+
+                        if (e.type === 'tortoise' && e.state === 'patrol') {
+                            // السلحفاة تدخل في قوقعتها
+                            e.state = 'shell_idle';
+                            if (e.extraParts.head) e.extraParts.head.visible = false;
+                            e.legs.forEach(l => l.visible = false);
+                            score += 150;
+                            showToast('🐢 قوقعة صخرية! اركلها لتطيح بالأعداء!');
+                        } else if (e.type === 'tortoise' && e.state === 'shell_idle') {
+                            e.state = 'shell_moving';
+                            e.dir = p.x < e.x ? 1 : -1;
+                            score += 200;
+                        } else {
+                            e.alive = false;
+                            e.mesh.visible = false;
+                            score += 250;
+                            spawnBurstParticles(e.x, e.y + 0.6, 0x8d6e63, 14);
+                        }
+                        updateHUD();
+                    } else if (e.type === 'tortoise' && e.state === 'shell_idle') {
+                        // ركل القوقعة الساكنة عند المشي إليها
+                        sfxStomp();
+                        e.state = 'shell_moving';
+                        e.dir = p.x < e.x ? 1 : -1;
+                        e.x += e.dir * 0.8;
+                    } else {
+                        hurtPlayer();
+                    }
+                }
+            }
+
+            // 7. تحديث معركة زعيم قلعة صلخد (إن وجد)
+            if (boss && boss.alive) {
+                boss.x += boss.vx;
+                if (boss.x < boss.minX) boss.vx = Math.abs(boss.vx);
+                if (boss.x > boss.maxX) boss.vx = -Math.abs(boss.vx);
+
+                boss.jumpTimer++;
+                if (boss.jumpTimer > 110 && boss.y <= boss.baseY + 0.05) {
+                    boss.vy = 0.34;
+                    boss.jumpTimer = 0;
+                }
+                boss.vy -= 0.014;
+                boss.y = Math.max(boss.baseY, boss.y + boss.vy);
+                boss.mesh.position.set(boss.x, boss.y, 0);
+
+                // الزعيم ينفث كرات نار نحو يمان
+                boss.fireTimer++;
+                if (boss.fireTimer > 95 && Math.abs(p.x - boss.x) < 26) {
+                    boss.fireTimer = 0;
+                    sfxFireball();
+                    const bFire = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.42, 12, 12),
+                        new THREE.MeshBasicMaterial({ color: 0xff1744 })
+                    );
+                    bFire.position.set(boss.x - 1.6, boss.y + 2.0, 0);
+                    scene.add(bFire);
+                    enemies.push({
+                        type: 'falcon',
+                        mesh: bFire,
+                        legs: [],
+                        extraParts: {},
+                        x: boss.x - 1.6,
+                        y: boss.y + 1.6,
+                        baseY: boss.y + 1.6,
+                        minX: boss.x - 32,
+                        maxX: boss.x + 2,
+                        dir: -1,
+                        speed: 0.22,
+                        state: 'patrol',
+                        alive: true,
+                        animPhase: 0
+                    });
+                }
+
+                // تصادم اللاعب مع الزعيم
+                if (Math.abs(p.x - boss.x) < 1.9 && Math.abs(p.y - boss.y) < 2.6) {
+                    if (p.vy < 0 && p.y > boss.y + 1.8) {
+                        sfxStomp();
+                        p.vy = 0.42;
+                        damageBoss(1);
+                    } else {
+                        hurtPlayer();
+                    }
+                }
+            }
+
+            // 8. تحديث كرات اللهب التي يطلقها يمان الناري
+            for (const f of fireballs) {
+                if (!f.active) continue;
+                f.vy -= 0.016;
+                f.x += f.vx;
+                f.y += f.vy;
+
+                // ارتداد كرة اللهب على الأرضيات
+                for (const plat of platforms) {
+                    if (!plat.isHazard && f.x >= plat.x - plat.w / 2 && f.x <= plat.x + plat.w / 2) {
+                        if (f.y <= plat.top + 0.25 && f.y >= plat.top - 0.4 && f.vy < 0) {
+                            f.y = plat.top + 0.25;
+                            f.vy = 0.22;
+                            f.bounces++;
+                        }
+                    }
+                }
+                f.mesh.position.set(f.x, f.y, 0);
+
+                if (f.bounces > 4 || f.y < -5) {
+                    f.active = false;
+                    f.mesh.visible = false;
+                    continue;
+                }
+
+                // إصابة الحيوانات المهاجمة بكرة اللهب
+                for (const e of enemies) {
+                    if (e.alive && Math.abs(f.x - e.x) < 1.1 && Math.abs(f.y - (e.y + 0.6)) < 1.2) {
+                        e.alive = false;
+                        e.mesh.visible = false;
+                        f.active = false;
+                        f.mesh.visible = false;
+                        sfxStomp();
+                        score += 300;
+                        spawnBurstParticles(e.x, e.y + 0.6, 0xff5722, 14);
+                        updateHUD();
+                        break;
+                    }
+                }
+
+                // إصابة زعيم قلعة صلخد بكرة اللهب
+                if (boss && boss.alive && Math.abs(f.x - boss.x) < 1.8 && Math.abs(f.y - (boss.y + 1.5)) < 2.2) {
+                    f.active = false;
+                    f.mesh.visible = false;
+                    sfxStomp();
+                    damageBoss(1);
+                }
+            }
+
+            // 9. تحديث الشظايا والمؤثرات والغيوم
+            for (const pt of particles) {
+                if (pt.life <= 0) continue;
+                pt.life--;
+                pt.vy -= 0.015;
+                pt.mesh.position.x += pt.vx;
+                pt.mesh.position.y += pt.vy;
+                pt.mesh.position.z += pt.vz;
+                pt.mesh.rotation.x += 0.15;
+                pt.mesh.rotation.y += 0.15;
+                if (pt.life <= 0) pt.mesh.visible = false;
+            }
+
+            clouds.forEach(c => {
+                c.position.x -= 0.012;
+                if (c.position.x < -30) c.position.x = 220;
+            });
+            skyBirds.forEach(b => {
+                b.phase += 0.22;
+                b.group.position.x += 0.035;
+                b.group.position.y += Math.sin(b.phase * 0.5) * 0.015;
+                if (b.group.position.x > 230) b.group.position.x = -20;
+                b.wL.rotation.z = Math.sin(b.phase) * 0.55;
+                b.wR.rotation.z = -Math.sin(b.phase) * 0.55;
+            });
+
+            // 10. الوصول إلى راية النصر في نهاية المرحلة
+            if (goalFlag && Math.abs(p.x - goalFlag.x) < 1.8) {
+                sfxWin();
+                score += 1000;
+                updateHUD();
+
+                if (currentLevel < 4) {
+                    const nextLvl = currentLevel + 1;
+                    showOverlayScreen(
+                        `🏆 أحسنت يا بطل YAMAN NASIR!`,
+                        `لقد أتممت المرحلة بنجاح باهر في ربوع محافظة السويداء!<br>استعد الآن للانتقال إلى المرحلة <b>1-${nextLvl}</b>.`,
+                        `الانتقال إلى المرحلة 1-${nextLvl} ◀`,
+                        () => {
+                            loadLevel(nextLvl);
+                            resumeGame();
+                        }
+                    );
+                } else {
+                    showOverlayScreen(
+                        `👑 نصر أسطوري للبطل YAMAN NASIR! 👑`,
+                        `لقد حررت جميع المراحل ورفعت راية <b>YAMAN NASIR</b> فوق قمة <b>قلعة صلخد التاريخية</b> في محافظة السويداء!<br><br>⭐ مجموع النقاط النهائي: <b>${score}</b> | 🪙 العملات الذهبية: <b>${coinsCount}</b>`,
+                        `اللعب من جديد في ربوع الجبل`,
+                        () => {
+                            score = 0;
+                            coinsCount = 0;
+                            lives = 5;
+                            loadLevel(1);
+                            resumeGame();
+                        }
+                    );
+                }
+            }
+
+            // 11. تحديث الكاميرا الذكية المتكيفة مع شاشة الموبايل (الطولية Portrait والعرضية Landscape)
+            const aspect = window.innerWidth / Math.max(1, window.innerHeight);
+            const isPortrait = aspect < 1.0;
+
+            let camOffsetX = isPortrait ? 2.4 : 4.2;
+            let camOffsetY = isPortrait ? 4.8 : 4.0;
+            // في الوضع الطولي نزيد بعد الكاميرا تلقائياً لتوسيع مجال الرؤية الأفقي للمرحلة
+            let camDistZ = isPortrait ? Math.min(28, 15.5 / Math.max(0.52, aspect)) : 16.5;
+
+            if (cameraMode === 1) {
+                camOffsetX = isPortrait ? 1.6 : 2.5;
+                camOffsetY = isPortrait ? 3.4 : 2.8;
+                camDistZ *= 0.74;
+            } else if (cameraMode === 2) {
+                camOffsetX = isPortrait ? 3.5 : 6.0;
+                camOffsetY = isPortrait ? 6.4 : 6.2;
+                camDistZ *= 1.32;
+            }
+
+            camera.position.x += (p.x + camOffsetX - camera.position.x) * 0.1;
+            camera.position.y += (Math.max(4.0, p.y + camOffsetY) - camera.position.y) * 0.085;
+            camera.position.z += (camDistZ - camera.position.z) * 0.1;
+            camera.lookAt(p.x + (isPortrait ? 1.2 : 2.0), Math.max(2.2, p.y + 1.4), 0);
+        }
+
+        function damageBoss(dmg) {
+            if (!boss || !boss.alive) return;
+            boss.hp -= dmg;
+            const pct = Math.max(0, (boss.hp / boss.maxHp) * 100);
+            document.getElementById('boss-bar-fill').style.width = pct + '%';
+            spawnBurstParticles(boss.x, boss.y + 2, 0xff3d00, 18);
+
+            if (boss.hp <= 0) {
+                boss.alive = false;
+                boss.mesh.visible = false;
+                document.getElementById('boss-hud').style.display = 'none';
+                score += 5000;
+                sfxWin();
+                spawnBurstParticles(boss.x, boss.y + 2, 0xffd700, 35);
+                showToast('🎉 تم القضاء على تنين قلعة صلخد! تقدم نحو الراية!');
+                updateHUD();
+            }
+        }
+
+        // =========================================================================
+        // 13. إدارة الواجهة والأزرار والتشغيل
+        // =========================================================================
+        function updateHUD() {
+            document.getElementById('hud-coins').innerText = coinsCount;
+            document.getElementById('hud-score').innerText = score;
+            document.getElementById('hud-lives').innerText = lives;
+        }
+
+        let toastTimeout = null;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.add('show');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => t.classList.remove('show'), 2600);
+        }
+
+        function showOverlayScreen(title, desc, btnText, callback) {
+            gameActive = false;
+            document.getElementById('overlay-title').innerHTML = title;
+            document.getElementById('overlay-desc').innerHTML = desc;
+            const btn = document.getElementById('overlay-btn');
+            btn.innerText = btnText;
+            btn.onclick = callback;
+            document.getElementById('overlay').style.display = 'flex';
+        }
+
+        function startGame() {
+            initAudio();
+            startBGM();
+            resumeGame();
+        }
+
+        function resumeGame() {
+            document.getElementById('overlay').style.display = 'none';
+            gameActive = true;
+        }
+
+        function jumpToLevel(lvl) {
+            initAudio();
+            loadLevel(lvl);
+            resumeGame();
+            showToast(`⛰️ تم الانتقال إلى المرحلة 1-${lvl}`);
+        }
+
+        function toggleCameraMode() {
+            cameraMode = (cameraMode + 1) % 3;
+            const names = ['قياسية', 'سينمائية قريبة', 'بانورامية واسعة'];
+            showToast(`🎥 زاوية الكاميرا: ${names[cameraMode]}`);
+        }
+
+        function setupControls() {
+            // 1. دعم لوحة المفاتيح للكمبيوتر
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
+                if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
+                if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') keys.up = true;
+                if (e.code === 'KeyX' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') keys.fire = true;
+
+                if (e.code === 'Digit1') jumpToLevel(1);
+                if (e.code === 'Digit2') jumpToLevel(2);
+                if (e.code === 'Digit3') jumpToLevel(3);
+                if (e.code === 'Digit4') jumpToLevel(4);
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
+                if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+                if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') keys.up = false;
+                if (e.code === 'KeyX' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') keys.fire = false;
+            });
+
+            // منع القوائم المنبثقة عند الضغط المطول على شاشة الموبايل
+            window.addEventListener('contextmenu', (e) => e.preventDefault());
+
+            // 2. منظومة اللمس المتعدد الاحترافية للموبايل (Multi-Touch + Slide D-Pad)
+            const leftZone = document.getElementById('left-pad-zone');
+            const btnLeft = document.getElementById('btn-left');
+            const btnRight = document.getElementById('btn-right');
+            const btnJump = document.getElementById('btn-jump');
+            const btnFire = document.getElementById('btn-fire');
+
+            // معالجة الانزلاق السلس للإبهام الأيسر على منطقة الحركة (تبديل فوري بين يسار ويمين دون رفع الإصبع)
+            const handleLeftZoneTouches = (e) => {
+                e.preventDefault();
+                initAudio();
+                let moveLeft = false;
+                let moveRight = false;
+                const rect = leftZone.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+
+                for (let i = 0; i < e.touches.length; i++) {
+                    const t = e.touches[i];
+                    // فحص ما إذا كانت اللمسة داخل النصف الأيسر من الشاشة أو منطقة الـ D-Pad
+                    if (t.clientX >= rect.left - 35 && t.clientX <= rect.right + 35 &&
+                        t.clientY >= rect.top - 45 && t.clientY <= rect.bottom + 45) {
+                        if (t.clientX < centerX - 6) moveLeft = true;
+                        else if (t.clientX > centerX + 6) moveRight = true;
+                    }
+                }
+
+                keys.left = moveLeft;
+                keys.right = moveRight;
+                btnLeft.classList.toggle('pressed', moveLeft);
+                btnRight.classList.toggle('pressed', moveRight);
+            };
+
+            leftZone.addEventListener('touchstart', handleLeftZoneTouches, { passive: false });
+            leftZone.addEventListener('touchmove', handleLeftZoneTouches, { passive: false });
+            leftZone.addEventListener('touchend', handleLeftZoneTouches, { passive: false });
+            leftZone.addEventListener('touchcancel', handleLeftZoneTouches, { passive: false });
+
+            // دعم الماوس للتجربة على الكمبيوتر أيضاً
+            let mouseDownLeftZone = false;
+            leftZone.addEventListener('mousedown', (e) => {
+                mouseDownLeftZone = true;
+                const rect = leftZone.getBoundingClientRect();
+                const isL = e.clientX < (rect.left + rect.width / 2);
+                keys.left = isL;
+                keys.right = !isL;
+                btnLeft.classList.toggle('pressed', isL);
+                btnRight.classList.toggle('pressed', !isL);
+            });
+            window.addEventListener('mouseup', () => {
+                if (mouseDownLeftZone) {
+                    mouseDownLeftZone = false;
+                    keys.left = false;
+                    keys.right = false;
+                    btnLeft.classList.remove('pressed');
+                    btnRight.classList.remove('pressed');
+                }
+            });
+
+            // معالجة أزرار الإبهام الأيمن (القفز واللهب) مع دعم اللمس المتزامن
+            const bindActionBtn = (el, keyName) => {
+                if (!el) return;
+                const onStart = (e) => {
+                    e.preventDefault();
+                    initAudio();
+                    keys[keyName] = true;
+                    el.classList.add('pressed');
+                };
+                const onEnd = (e) => {
+                    e.preventDefault();
+                    keys[keyName] = false;
+                    el.classList.remove('pressed');
+                };
+                el.addEventListener('touchstart', onStart, { passive: false });
+                el.addEventListener('touchend', onEnd, { passive: false });
+                el.addEventListener('touchcancel', onEnd, { passive: false });
+                el.addEventListener('mousedown', onStart);
+                el.addEventListener('mouseup', onEnd);
+                el.addEventListener('mouseleave', onEnd);
+            };
+
+            bindActionBtn(btnJump, 'up');
+            bindActionBtn(btnFire, 'fire');
+        }
+
+        // =========================================================================
+        // 14. تهيئة محرك Three.js الرئيسي وحلقة الرسم
+        // =========================================================================
+        function initEngine() {
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 450);
+            camera.position.set(4, 5, 16.5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.08;
+            document.body.appendChild(renderer.domElement);
+
+            hemiLight = new THREE.HemisphereLight(0xffffff, 0x37474f, 0.65);
+            scene.add(hemiLight);
+
+            dirLight = new THREE.DirectionalLight(0xfff3e0, 1.15);
+            dirLight.position.set(35, 65, 35);
+            dirLight.castShadow = true;
+            const isMobileGPU = window.innerWidth < 950;
+            dirLight.shadow.mapSize.width = isMobileGPU ? 1024 : 2048;
+            dirLight.shadow.mapSize.height = isMobileGPU ? 1024 : 2048;
+            dirLight.shadow.camera.near = 0.5;
+            dirLight.shadow.camera.far = 180;
+            const d = 55;
+            dirLight.shadow.camera.left = -d;
+            dirLight.shadow.camera.right = d;
+            dirLight.shadow.camera.top = d;
+            dirLight.shadow.camera.bottom = -d;
+            scene.add(dirLight);
+
+            createProceduralTextures();
+            buildPlayerModel();
+            setupControls();
+            loadLevel(1);
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = Math.min(clock.getDelta(), 0.1);
+            updatePhysicsAndGameplay(dt);
+            renderer.render(scene, camera);
+        }
+
+        window.onload = initEngine;
+    </script>
+</body>
+</html>
